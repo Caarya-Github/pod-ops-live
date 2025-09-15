@@ -1,0 +1,544 @@
+{
+  "pods": {
+    "yoshi-dj": {
+      "podId": "67f120c7c9b0d3288bba1be5",
+      "name": "DJ",
+      "crew": "YOSHI",
+      "bmps": [
+        {
+          "id": "executive-lead",
+          "title": "Executive Lead",
+          "subtitle": "Onboarding new members",
+          "status": "active",
+          "category": "leadership"
+        },
+        {
+          "id": "kickoff-caarya",
+          "title": "Kickoff → Caarya",
+          "subtitle": "Onboarding new members",
+          "description": "New members are most confused on Day 1. If you don't standardize onboarding, leads waste time repeating basics, newcomers start late, and enthusiasm dies. A consistent welcome + first mini-task converts interest → contribution fast.",
+          "status": "active",
+          "category": "leadership"
+        },
+        {
+          "id": "chaos-calendar",
+          "title": "Chaos → Calendar",
+          "subtitle": "Calendar + comms rhythm",
+          "description": "People fail not from lack of will, but from collisions and forgetting. A shared calendar reduces last-minute chaos and normalizes rituals (check-ins, updates)",
+          "status": "locked",
+          "category": "leadership"
+        },
+        {
+          "id": "inbox-impact",
+          "title": "Inbox → Impact",
+          "subtitle": "ask tracker + daily/weekly updates",
+          "description": "Work gets lost in chats. A public tracker makes status visible, prevents duplicates, and creates a body of evidence for HQ.",
+          "status": "locked",
+          "category": "execution"
+        },
+        {
+          "id": "talent-tuning-1",
+          "title": "Talent Tuning",
+          "subtitle": "Roster fit",
+          "description": "Mismatched roles = slow progress + frustration. Adjust reality to strengths.",
+          "status": "locked",
+          "category": "execution"
+        },
+        {
+          "id": "docs-done-1",
+          "title": "Docs → Done",
+          "subtitle": "Master checklists & SOP vault",
+          "description": "Under pressure, memory fails. Checklists make readiness objective and repeatable",
+          "status": "locked",
+          "category": "execution"
+        },
+        {
+          "id": "raw-report",
+          "title": "Raw → Report",
+          "subtitle": "Weekly reporting",
+          "description": "\"If it isn't written, it didn't happen.\" Reports make your value auditable and shareable (internally and for future references",
+          "status": "locked",
+          "category": "visibility"
+        },
+        {
+          "id": "talent-tuning-2",
+          "title": "Talent Tuning",
+          "subtitle": "Roster fit",
+          "description": "Mismatched roles = slow progress + frustration. Adjust reality to strengths.",
+          "status": "locked",
+          "category": "visibility"
+        },
+        {
+          "id": "docs-done-2",
+          "title": "Docs → Done",
+          "subtitle": "Master checklists & SOP vault",
+          "description": "Under pressure, memory fails. Checklists make readiness objective and repeatable",
+          "status": "locked",
+          "category": "visibility"
+        }
+      ],
+      "culture": {
+        "sections": [
+          {
+            "id": "goal-setting",
+            "title": "Goal Setting and Mission Alignment",
+            "items": [
+              {
+                "id": "daily-standup",
+                "title": "Daily Stand-Up",
+                "subtitle": "#Success Recognition and Support",
+                "description": "Regular inclusive meetings where every team member is encouraged to contribute and share their views.",
+                "status": "active"
+              }
+            ]
+          },
+          {
+            "id": "holding-accountability",
+            "title": "Holding Accountability",
+            "items": [
+              {
+                "id": "weekly-retro",
+                "title": "Weekly Retro",
+                "subtitle": "#Peer Recognition and Support",
+                "description": "Weekly meetings that focus on discussing the transparent and open sharing of both positive and negative project developments through the mad, sad, glad framework.",
+                "status": "locked"
+              },
+              {
+                "id": "accountability-checkins",
+                "title": "Accountability Check-ins",
+                "subtitle": "Project Success Updates",
+                "description": "Regularly scheduled meetings to discuss personal contributions and project status.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "overcoming-challenges",
+            "title": "Overcoming Challenges",
+            "items": [
+              {
+                "id": "challenge-circles",
+                "title": "Challenge Circles",
+                "subtitle": "Failure Roundtables",
+                "description": "Regular sessions where members meet to discuss ongoing challenges and work together to find solutions.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "embracing-failures",
+            "title": "Embracing Failures",
+            "items": [
+              {
+                "id": "honesty-hours",
+                "title": "Honesty Hours",
+                "subtitle": "Failure Analysis Collaborationt",
+                "description": "Designated times when teams can discuss project failures and personal errors in a supportive environment",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "technical-support",
+            "title": "Technical support via Expert Guidance",
+            "items": [
+              {
+                "id": "expert-hours",
+                "title": "Expert Hours",
+                "subtitle": "Failure Support and Guidance",
+                "description": "Dedicated times when admin or other experts are available to share their knowledge and answer questions in a one-on-one setting.",
+                "status": "locked"
+              },
+              {
+                "id": "expert-exchange",
+                "title": "Expert Exchange",
+                "subtitle": "Failure Reporting",
+                "description": "Regularly scheduled sessions where experts from various fields share their knowledge with project teams.",
+                "status": "locked"
+              },
+              {
+                "id": "empowerment-workshops",
+                "title": "Empowerment Workshops",
+                "subtitle": "Failure Analysis Collaboration",
+                "description": "Workshops that focus on building specific skills relevant to the project's needs, led by industry experts.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "community-support",
+            "title": "On Demand Community Support",
+            "items": [
+              {
+                "id": "collaborative-problem-solving",
+                "title": "Collaborative Problem-Solving Sessions",
+                "subtitle": "Failure Reporting",
+                "description": "Workshops where team members come together to brainstorm solutions.",
+                "status": "locked"
+              },
+              {
+                "id": "quick-fix-hours",
+                "title": "Quick Fix Hours",
+                "subtitle": "Failure Reporting",
+                "description": "Dedicated times when teams focus solely on resolving reported issues.",
+                "status": "locked"
+              },
+              {
+                "id": "rapid-response-teams",
+                "title": "Rapid Response Teams",
+                "subtitle": "Failure Lessons and Assistance",
+                "description": "Dedicated teams or individuals ready to provide immediate assistance whenever needed.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "focus-on-vision",
+            "title": "Constant focus on the Vision",
+            "items": [
+              {
+                "id": "motivation-mondays",
+                "title": "Motivation Mondays",
+                "subtitle": "Peer Recognition and Support",
+                "description": "Weekly messages or meetings that provide motivational insights and stories to start the week strongly.",
+                "status": "locked"
+              },
+              {
+                "id": "unity-gatherings",
+                "title": "Unity Gatherings",
+                "subtitle": "Success Recognition and Support",
+                "description": "Regular community events or gatherings that celebrate togetherness and shared goals.",
+                "status": "locked"
+              }
+            ]
+          }
+        ]
+      },
+      "marketing": {
+        "items": [
+          {
+            "id": "content-marketing",
+            "title": "Content Marketing",
+            "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+            "status": "active"
+          },
+          {
+            "id": "partnership-marketing",
+            "title": "Partnership Marketing",
+            "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+            "status": "locked"
+          },
+          {
+            "id": "growth-marketing",
+            "title": "Growth Marketing",
+            "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+            "status": "locked"
+          },
+          {
+            "id": "performance-marketing",
+            "title": "Performance Marketing",
+            "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+            "status": "locked"
+          }
+        ]
+      },
+      "strategicPartners": {
+        "sections": [
+          {
+            "id": "campus-partners",
+            "title": "Campus Partners",
+            "items": [
+              {
+                "id": "university-collaboration",
+                "title": "University Collaboration",
+                "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+                "status": "active"
+              },
+              {
+                "id": "academic-partnerships",
+                "title": "Academic Partnerships",
+                "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "industry-partners",
+            "title": "Industry Partners",
+            "items": [
+              {
+                "id": "corporate-partnerships",
+                "title": "Corporate Partnerships",
+                "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+                "status": "locked"
+              },
+              {
+                "id": "startup-collaborations",
+                "title": "Startup Collaborations",
+                "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+                "status": "locked"
+              }
+            ]
+          }
+        ]
+      },
+      "partnerRelations": {
+        "sections": [
+          {
+            "id": "relationship-management",
+            "title": "Relationship Management",
+            "items": [
+              {
+                "id": "partner-onboarding",
+                "title": "Partner Onboarding",
+                "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+                "status": "active"
+              },
+              {
+                "id": "ongoing-support",
+                "title": "Ongoing Support",
+                "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "communication-channels",
+            "title": "Communication Channels",
+            "items": [
+              {
+                "id": "regular-checkins",
+                "title": "Regular Check-ins",
+                "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+                "status": "locked"
+              },
+              {
+                "id": "feedback-systems",
+                "title": "Feedback Systems",
+                "description": "Description here..... lorem ipsum mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.",
+                "status": "locked"
+              }
+            ]
+          }
+        ]
+      },
+      "services": {
+        "sections": [
+          {
+            "id": "level-1-discovery",
+            "title": "Level 1 – Discovery & Talent Pipeline",
+            "items": [
+              {
+                "id": "startup-discovery",
+                "title": "Startup Discovery",
+                "subtitle": "Student Side",
+                "description": "A curated startup immersion experience through shadowing, demos, and founder walkthroughs.",
+                "status": "active"
+              },
+              {
+                "id": "talent-discovery",
+                "title": "Talent Discovery",
+                "subtitle": "Startup Side",
+                "description": "A pipeline to pre-vetted student talent matched on both skills and culture.",
+                "status": "locked"
+              },
+              {
+                "id": "talent-curation-placement",
+                "title": "Talent Curation & Placement",
+                "subtitle": "Startup Side",
+                "description": " Skill-shaping and onboarding of student recruits before placement.",
+                "status": "locked"
+              },
+              {
+                "id": "talent-stewardship",
+                "title": "Talent Stewardship",
+                "subtitle": "Startup Side",
+                "description": "Ongoing performance tracking and upskilling of placed student talent.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "level-2-engagement",
+            "title": "Level 2 – Engagement & Learning",
+            "items": [
+              {
+                "id": "talent-engagement",
+                "title": "Talent Engagement (Founder Dialogues)",
+                "subtitle": "Student Side",
+                "description": "Candid sessions with founders and experts sharing startup stories and real-life lessons.",
+                "status": "locked"
+              },
+              {
+                "id": "career-direction",
+                "title": "Career Direction",
+                "subtitle": "Student Side",
+                "description": "A guided self-discovery process to explore personal and career interests.",
+                "status": "locked"
+              },
+              {
+                "id": "career-stage-mapping",
+                "title": "Career Stage Mapping",
+                "subtitle": "Student Side",
+                "description": "A five-step framework that visualizes one's career development journey.",
+                "status": "locked"
+              },
+              {
+                "id": "caarya-life",
+                "title": "Caarya Life",
+                "subtitle": "Student Side",
+                "description": "A unified platform for personal development, collaboration, and paid opportunities.",
+                "status": "locked"
+              },
+              {
+                "id": "tech-mentorship",
+                "title": " Tech Mentorship",
+                "subtitle": "Student Side",
+                "description": "An on-demand expert network for technical guidance and project help.",
+                "status": "locked"
+              },
+              {
+                "id": "learning-ledger",
+                "title": "Learning Ledger",
+                "subtitle": "Student Side",
+                "description": "A system that automatically logs student tasks, reflections, outputs, and feedback across their pod journey.",
+                "status": "locked"
+              },
+              {
+                "id": "dynamic-portfolio",
+                "title": "Dynamic Portfolio",
+                "subtitle": "Student Side",
+                "description": "A living showcase of student work, competencies, and endorsements.",
+                "status": "locked"
+              },
+              {
+                "id": "knowledge-vault",
+                "title": "Knowledge Vault",
+                "subtitle": "Student Side",
+                "description": "A centralized, version-controlled repository of best practices, case decks, and curated tools.",
+                "status": "locked"
+              },
+              {
+                "id": "founder-dialogue-spotlight",
+                "title": "Founder Dialogue Spotlight",
+                "subtitle": "Startup Side",
+                "description": "Live or recorded conversations with startup founders.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "level-3-community",
+            "title": "Level 3 – Community as a Service",
+            "items": [
+              {
+                "id": "peer-synergy",
+                "title": "Peer Synergy",
+                "subtitle": "Student Side",
+                "description": "Structured peer-to-peer teaming for cross-disciplinary micro-projects.",
+                "status": "locked"
+              },
+              {
+                "id": "creator-pool-student",
+                "title": "Creator Pool",
+                "subtitle": "Student Side",
+                "description": "An on-demand crew of student content creators available for gigs.",
+                "status": "locked"
+              },
+              {
+                "id": "event-orchestration",
+                "title": "Event Orchestration",
+                "subtitle": "Startup Side",
+                "description": "Planning and execution of hackathons, challenges, and campus events.",
+                "status": "locked"
+              },
+              {
+                "id": "evp-spotlight",
+                "title": "EVP Spotlight",
+                "subtitle": "Startup Side",
+                "description": "Curated campus roadshows showcasing startup mission and culture",
+                "status": "locked"
+              },
+              {
+                "id": "creator-pool-startup",
+                "title": "Creator Pool",
+                "subtitle": "Startup Side",
+                "description": "On-demand student content creators for media and campaign needs.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "level-4-incubation",
+            "title": "Level 4 – Incubation as a Service",
+            "items": [
+              {
+                "id": "idea-sandbox",
+                "title": "Idea Sandbox",
+                "subtitle": "Student Side",
+                "description": "A protected space for students to test and refine early-stage ideas.",
+                "status": "locked"
+              },
+              {
+                "id": "founder-training",
+                "title": "Founder Training",
+                "subtitle": "Startup Side",
+                "description": "Short workshops on core startup topics like GTM, legal, and cap table hygiene.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "level-5-innovation",
+            "title": "Level 5 – Innovation as a Service",
+            "items": [
+              {
+                "id": "team-training-ground",
+                "title": "Team Training Ground",
+                "subtitle": "Student Side",
+                "description": "A simulated startup environment for student venture teams.",
+                "status": "locked"
+              },
+              {
+                "id": "innovation-sprints",
+                "title": "Innovation Sprints",
+                "subtitle": "Startup Side",
+                "description": "Facilitated brainstorming and ideation sessions with student squads.",
+                "status": "locked"
+              }
+            ]
+          },
+          {
+            "id": "level-6-brand-promotion",
+            "title": "Level 6 – Brand Promotion as a Service",
+            "items": [
+              {
+                "id": "brand-lift-gigs",
+                "title": "Brand Lift Gigs",
+                "subtitle": "Student Side",
+                "description": "Live student-led campaigns to grow brand presence through content and outreach.",
+                "status": "locked"
+              },
+              {
+                "id": "brand-lift",
+                "title": "Brand Lift",
+                "subtitle": "Startup Side",
+                "description": "Student-powered campaign and content support.",
+                "status": "locked"
+              }
+            ]
+          }
+        ]
+      },
+      "tabs": [
+        "Team Directory",
+        "BPMs",
+        "Culture",
+        "Marketing",
+        "Strategic Partners",
+        "Partner Relations",
+        "Services"
+      ]
+    }
+  }
+}
