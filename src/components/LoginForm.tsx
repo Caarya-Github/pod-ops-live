@@ -82,8 +82,6 @@ export default function LoginForm() {
         throw new Error(errorData?.error || `Server error: ${checkResponse.status}`);
       }
       const checkData = await checkResponse.json();
-      console.log('Check Data:', checkData);
-      console.log('Token:', checkData.data.token);
       localStorage.setItem('token', checkData.data.token);
 
       if (!checkData.success || !checkData.data?.exists) {
@@ -261,7 +259,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
         // OTP Verification Form
         <form onSubmit={handleVerifyOTP} className="space-y-5">
           <div className="flex flex-col items-center space-y-3">
-            <p className="text-sm  text-center">
+            <p className="text-sm  text-center text-black">
               Enter the 6-digit code sent to <br /> +91 {phoneNumber}
             </p>
             <InputOTP
@@ -277,7 +275,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
                   <InputOTPSlot
                     key={i}
                     index={i}
-                    className="w-10 h-11 rounded-lg"
+                    className="w-10 h-11 rounded-lg text-black"
                   />
                 ))}
               </InputOTPGroup>
@@ -308,7 +306,7 @@ const handleVerifyOTP = async (e: React.FormEvent) => {
             type="button"
             onClick={() => { setIsOTPSent(false); setError(''); setPhoneError(''); setVerificationCode(''); }}
             disabled={loading}
-            className="w-full text-center text-xs hover:text-indigo-100 disabled:opacity-50 transition-colors"
+            className="w-full text-center text-xs hover:text-indigo-100 disabled:opacity-50 transition-colors text-black"
           >
             Change phone number
           </button>

@@ -23,7 +23,9 @@ export default function RootLayout({
         className={`${lato.variable} ${satoshi.variable} ${karla.variable} antialiased`}
       >
         <AuthProvider>
-          {children}
+          <AuthWrapper>
+            {children}
+          </AuthWrapper>
         </AuthProvider>
       </body>
     </html>
