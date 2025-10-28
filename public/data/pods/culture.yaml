@@ -1,0 +1,168 @@
+# Culture Configuration
+# This file defines all culture items organized by sections
+
+sections:
+  # ============================================
+  # CORE VALUES
+  # ============================================
+  - id: "values"
+    title: "Core Values"
+    items:
+      - id: "collaboration"
+        title: "Collaboration First"
+        subtitle: "Culture / Values"
+        description: "We believe in working together to achieve more. Foster open communication, share knowledge freely, and support each other's growth."
+
+      - id: "innovation"
+        title: "Continuous Innovation"
+        subtitle: "Culture / Values"
+        description: "Always looking for better ways to solve problems. Experiment, learn from failures, and embrace creative solutions."
+
+      - id: "transparency"
+        title: "Radical Transparency"
+        subtitle: "Culture / Values"
+        description: "Open communication builds trust and clarity. Share information openly, communicate decisions clearly, and maintain honest dialogue."
+
+      - id: "ownership"
+        title: "Ownership & Accountability"
+        subtitle: "Culture / Values"
+        description: "Take responsibility for your work and commitments. Own outcomes, learn from mistakes, and deliver on promises."
+
+      - id: "excellence"
+        title: "Pursuit of Excellence"
+        subtitle: "Culture / Values"
+        description: "Strive for high quality in everything we do. Set high standards, pay attention to details, and continuously improve."
+
+      - id: "diversity"
+        title: "Diversity & Inclusion"
+        subtitle: "Culture / Values"
+        description: "Embrace diverse perspectives and create an inclusive environment where everyone feels valued and heard."
+
+  # ============================================
+  # TEAM RITUALS
+  # ============================================
+  - id: "rituals"
+    title: "Team Rituals"
+    items:
+      - id: "morning-coffee"
+        title: "Morning Coffee Chat"
+        subtitle: "Culture / Rituals"
+        description: "Informal morning gathering to connect as humans, share what's on your mind, and start the day together."
+
+      - id: "demo-friday"
+        title: "Friday Demos"
+        subtitle: "Culture / Rituals"
+        description: "Weekly showcase of work and learnings. Share progress, demonstrate features, and celebrate achievements."
+
+      - id: "lunch-and-learn"
+        title: "Lunch & Learn"
+        subtitle: "Culture / Rituals"
+        description: "Bi-weekly sessions where team members share knowledge, teach new skills, or explore interesting topics together."
+
+      - id: "team-building"
+        title: "Monthly Team Building"
+        subtitle: "Culture / Rituals"
+        description: "Dedicated time for team bonding activities, games, or outings to strengthen relationships and have fun."
+
+      - id: "all-hands"
+        title: "Pod All-Hands"
+        subtitle: "Culture / Rituals"
+        description: "Monthly gathering to share updates, celebrate wins, discuss challenges, and align on goals and direction."
+
+      - id: "coffee-roulette"
+        title: "Coffee Roulette"
+        subtitle: "Culture / Rituals"
+        description: "Random 1-on-1 coffee chats with pod members to build cross-functional relationships and share perspectives."
+
+  # ============================================
+  # RECOGNITION & CELEBRATION
+  # ============================================
+  - id: "recognition"
+    title: "Recognition & Celebration"
+    items:
+      - id: "shoutouts"
+        title: "Peer Shoutouts"
+        subtitle: "Culture / Recognition"
+        description: "Celebrate wins and acknowledge contributions publicly. Recognize colleagues who go above and beyond."
+
+      - id: "milestones"
+        title: "Milestone Celebrations"
+        subtitle: "Culture / Recognition"
+        description: "Mark important achievements together - project launches, anniversaries, personal achievements, and team wins."
+
+      - id: "kudos-board"
+        title: "Kudos Board"
+        subtitle: "Culture / Recognition"
+        description: "Visual board where team members can post appreciation notes, thank yous, and recognition for peers."
+
+      - id: "awards"
+        title: "Quarterly Awards"
+        subtitle: "Culture / Recognition"
+        description: "Recognize outstanding contributions with quarterly awards for innovation, collaboration, and impact."
+
+      - id: "success-stories"
+        title: "Success Stories"
+        subtitle: "Culture / Recognition"
+        description: "Document and share inspiring stories of challenges overcome, lessons learned, and victories achieved."
+
+  # ============================================
+  # LEARNING & GROWTH
+  # ============================================
+  - id: "learning"
+    title: "Learning & Growth"
+    items:
+      - id: "skill-sharing"
+        title: "Skill Sharing Sessions"
+        subtitle: "Culture / Learning"
+        description: "Regular sessions where team members teach each other new skills, tools, or techniques."
+
+      - id: "book-club"
+        title: "Pod Book Club"
+        subtitle: "Culture / Learning"
+        description: "Monthly book club to read and discuss books on technology, leadership, productivity, and personal development."
+
+      - id: "conference-attendance"
+        title: "Conference Attendance"
+        subtitle: "Culture / Learning"
+        description: "Support for attending industry conferences, workshops, and events to learn and network."
+
+      - id: "mentorship"
+        title: "Mentorship Program"
+        subtitle: "Culture / Learning"
+        description: "Pair experienced members with those seeking guidance for mutual growth and knowledge transfer."
+
+      - id: "experiment-time"
+        title: "Experiment Time"
+        subtitle: "Culture / Learning"
+        description: "Dedicated time (e.g., 10% time) to explore new technologies, work on passion projects, or learn new skills."
+
+  # ============================================
+  # WELL-BEING & BALANCE
+  # ============================================
+  - id: "wellbeing"
+    title: "Well-being & Balance"
+    items:
+      - id: "flexible-hours"
+        title: "Flexible Working Hours"
+        subtitle: "Culture / Well-being"
+        description: "Maintain work-life balance with flexible schedules that respect personal time and responsibilities."
+
+      - id: "mental-health"
+        title: "Mental Health Support"
+        subtitle: "Culture / Well-being"
+        description: "Resources and programs to support mental health, reduce stress, and promote overall well-being."
+
+      - id: "wellness-initiatives"
+        title: "Wellness Initiatives"
+        subtitle: "Culture / Well-being"
+        description: "Programs for physical health like fitness challenges, meditation sessions, or wellness workshops."
+
+      - id: "pto-encouragement"
+        title: "PTO Encouragement"
+        subtitle: "Culture / Well-being"
+        description: "Actively encourage taking time off to rest, recharge, and prevent burnout."
+
+      - id: "sustainable-pace"
+        title: "Sustainable Pace"
+        subtitle: "Culture / Well-being"
+        description: "Maintain a sustainable work pace that prevents burnout and supports long-term productivity and creativity."

@@ -2,72 +2,14 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { fetchPods } from '@/lib/api';
-import { Pod } from '@/lib/types';
+import { fetchPods, fetchPodDetails } from '@/lib/api';
+import { Pod, PodDetailsResponse, BMP, SimpleItem, CultureSection, CultureItem, SectionedTabData, SimpleTabData } from '@/lib/types';
 import Navbar from '@/components/Navbar';
+import { LockedCard, ReadyCard, ActiveCard } from '@/components/PodCards';
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
-import podDataJson from '@/lib/pod-data.json';
 
-interface BPMCard {
-    id: string;
-    title: string;
-    subtitle: string;
-    description?: string;
-    status: 'active' | 'inactive' | 'locked';
-    category: 'leadership' | 'execution' | 'visibility';
-}
-
-interface CultureItem {
-    id: string;
-    title: string;
-    subtitle: string;
-    description: string;
-    status: 'active' | 'locked';
-}
-
-interface CultureSection {
-    id: string;
-    title: string;
-    items: CultureItem[];
-}
-
-interface CultureData {
-    sections: CultureSection[];
-}
-
-interface SimpleItem {
-    id: string;
-    title: string;
-    subtitle?: string;
-    description: string;
-    status: 'active' | 'locked';
-}
-
-interface SimpleTabData {
-    items: SimpleItem[];
-}
-
-interface SectionedTabData {
-    sections: Array<{
-        id: string;
-        title: string;
-        items: SimpleItem[];
-    }>;
-}
-
-interface PodData {
-    podId: string;
-    name: string;
-    crew: string;
-    bmps: BPMCard[];
-    culture?: CultureData;
-    marketing?: SimpleTabData;
-    strategicPartners?: SectionedTabData;
-    partnerRelations?: SectionedTabData;
-    services?: SectionedTabData;
-    tabs: string[];
-}
+// All interfaces are now imported from @/lib/types
 
 type TabType = 'Team Directory' | 'BPMs' | 'Culture' | 'Marketing' | 'Strategic Partners' | 'Partner Relations' | 'Services';
 
@@ -86,7 +28,7 @@ export default function PodPage() {
     const params = useParams();
     const router = useRouter();
     const [pod, setPod] = useState<Pod | null>(null);
-    const [podData, setPodData] = useState<PodData | null>(null);
+    const [podData, setPodData] = useState<PodDetailsResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabType>('Team Directory');
@@ -121,85 +63,47 @@ export default function PodPage() {
                 if (foundPod) {
                     setPod(foundPod);
 
-                    // Load pod-specific data from JSON
-                    const podKey = `${crew}-${podSlug}`;
-                    const staticPodData = podDataJson.pods[podKey as keyof typeof podDataJson.pods];
-
-                    if (staticPodData) {
-                        // Cast the JSON data to match our TypeScript interfaces
+                    // Load pod-specific data from API
+                    try {
+                        const podDetails = await fetchPodDetails(foundPod.id);
+                        if (podDetails) {
+                            setPodData(podDetails);
+                        } else {
+                            console.warn('No detailed data found for pod:', foundPod.id);
+                            // Set default empty data structure
+                            setPodData({
+                                _id: '',
+                                podId: foundPod.id,
+                                name: foundPod.name,
+                                crew: foundPod.crew,
+                                bmps: [],
+                                culture: { sections: [] },
+                                marketing: { sections: [] },
+                                strategicPartners: { sections: [] },
+                                partnerRelations: { sections: [] },
+                                services: { sections: [] },
+                                tabs: ['Team Directory'],
+                                createdAt: '',
+                                updatedAt: ''
+                            });
+                        }
+                    } catch (detailsError) {
+                        console.error('Error fetching pod details:', detailsError);
+                        // Set basic pod data even if details fail
                         setPodData({
-                            ...staticPodData,
-                            bmps: staticPodData.bmps.map((bmp) => ({
-                                ...bmp,
-                                status: bmp.status as 'active' | 'inactive' | 'locked',
-                                category: bmp.category as 'leadership' | 'execution' | 'visibility',
-                            })),
-                            culture: staticPodData.culture
-                                ? {
-                                      sections: staticPodData.culture.sections.map((section) => ({
-                                          ...section,
-                                          items: section.items.map((item) => ({
-                                              ...item,
-                                              status: item.status as 'active' | 'locked',
-                                          })),
-                                      })),
-                                  }
-                                : undefined,
-                            marketing: staticPodData.marketing
-                                ? {
-                                      items: staticPodData.marketing.items.map((item) => ({
-                                          ...item,
-                                          status: item.status as 'active' | 'locked',
-                                      })),
-                                  }
-                                : undefined,
-                            strategicPartners: staticPodData.strategicPartners
-                                ? {
-                                      sections: staticPodData.strategicPartners.sections.map((section) => ({
-                                          ...section,
-                                          items: section.items.map((item) => ({
-                                              ...item,
-                                              status: item.status as 'active' | 'locked',
-                                          })),
-                                      })),
-                                  }
-                                : undefined,
-                            partnerRelations: staticPodData.partnerRelations
-                                ? {
-                                      sections: staticPodData.partnerRelations.sections.map((section) => ({
-                                          ...section,
-                                          items: section.items.map((item) => ({
-                                              ...item,
-                                              status: item.status as 'active' | 'locked',
-                                          })),
-                                      })),
-                                  }
-                                : undefined,
-                            services: staticPodData.services
-                                ? {
-                                      sections: staticPodData.services.sections.map((section) => ({
-                                          ...section,
-                                          items: section.items.map((item) => ({
-                                              ...item,
-                                              status: item.status as 'active' | 'locked',
-                                          })),
-                                      })),
-                                  }
-                                : undefined,
-                        });
-                    } else {
-                        // Default data if no specific config found
-                        setPodData({
+                            _id: '',
                             podId: foundPod.id,
                             name: foundPod.name,
                             crew: foundPod.crew,
                             bmps: [],
                             culture: { sections: [] },
-                            marketing: { items: [] },
+                            marketing: { sections: [] },
                             strategicPartners: { sections: [] },
                             partnerRelations: { sections: [] },
                             services: { sections: [] },
-                            tabs: ['Team Directory', 'BPMs', 'Culture', 'Marketing', 'Strategic Partners', 'Partner Relations', 'Services'],
+                            tabs: ['Team Directory'],
+                            createdAt: '',
+                            updatedAt: ''
                         });
                     }
                 } else {
@@ -224,82 +128,47 @@ export default function PodPage() {
         console.log('Starting activation for:', bmpId);
     };
 
-    const renderBPMCard = (bmp: BPMCard) => {
+    const renderBPMCard = (bmp: BMP) => {
         const isKickoff = bmp.id === 'kickoff-caarya';
-        const isActive = bmp.status === 'active';
 
+        // Determine card type based on status
+        if (bmp.status === 'locked') {
+            return (
+                <LockedCard
+                    key={bmp.id}
+                    title={bmp.title}
+                    subtitle={bmp.subtitle}
+                    description={bmp.description || ''}
+                    onDetailsClick={() => handleBPMClick(bmp.id)}
+                />
+            );
+        }
+
+        if (bmp.status === 'ready') {
+            return (
+                <ReadyCard
+                    key={bmp.id}
+                    title={bmp.title}
+                    subtitle={bmp.subtitle}
+                    description={bmp.description || ''}
+                    onDetailsClick={() => handleBPMClick(bmp.id)}
+                    onActivate={() => handleStartActivation(bmp.id)}
+                    activateButtonText="Ready to Activate"
+                />
+            );
+        }
+
+        // status === 'active'
         return (
-            <div
+            <ActiveCard
                 key={bmp.id}
-                className={`w-80 p-4 rounded-2xl inline-flex flex-col justify-center items-start gap-6 cursor-pointer transition-all hover:shadow-lg ${
-                    isActive
-                        ? 'bg-white shadow-md shadow-[0px_2px_4px_-2px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-neutral-50'
-                        : 'bg-zinc-100 outline outline-1 outline-offset-[-1px] outline-stone-200'
-                }`}
-                onClick={() => handleBPMClick(bmp.id)}
-            >
-                {!isActive && (
-                    <div className="w-8 h-8 bg-zinc-800 rounded-md flex justify-center items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 12 14" fill="none">
-                            <path
-                                d="M9.99996 4.66667H9.33329V3.33333C9.33329 1.49333 7.83996 0 5.99996 0C4.15996 0 2.66663 1.49333 2.66663 3.33333V4.66667H1.99996C1.26663 4.66667 0.666626 5.26667 0.666626 6V12.6667C0.666626 13.4 1.26663 14 1.99996 14H9.99996C10.7333 14 11.3333 13.4 11.3333 12.6667V6C11.3333 5.26667 10.7333 4.66667 9.99996 4.66667ZM5.99996 10.6667C5.26663 10.6667 4.66663 10.0667 4.66663 9.33333C4.66663 8.6 5.26663 8 5.99996 8C6.73329 8 7.33329 8.6 7.33329 9.33333C7.33329 10.0667 6.73329 10.6667 5.99996 10.6667ZM8.06663 4.66667H3.93329V3.33333C3.93329 2.19333 4.85996 1.26667 5.99996 1.26667C7.13996 1.26667 8.06663 2.19333 8.06663 3.33333V4.66667Z"
-                                fill="white"
-                            />
-                        </svg>
-                    </div>
-                )}
-
-                <div
-                    className={
-                        isKickoff ? 'self-stretch flex flex-col justify-start items-start' : 'w-60 h-10 flex flex-col justify-start items-start'
-                    }
-                >
-                    <div className="self-stretch justify-start text-zinc-800 text-base font-bold font-['Lato'] leading-normal tracking-tight">
-                        {bmp.title}
-                    </div>
-                    <div className="justify-center text-stone-400 text-xs font-medium font-['Satoshi'] leading-none tracking-tight">
-                        {bmp.subtitle}
-                    </div>
-                </div>
-
-                {bmp.description && (
-                    <div className="self-stretch justify-center text-zinc-800 text-xs font-normal font-['Satoshi'] leading-tight tracking-tight">
-                        {bmp.description}
-                    </div>
-                )}
-
-                <div className={`self-stretch inline-flex justify-start items-start ${isKickoff ? 'gap-3' : 'gap-6'}`}>
-                    <div className={`${isKickoff ? 'p-6' : 'p-4'} rounded-[120px] flex justify-center items-center gap-1`}>
-                        <div className="justify-start text-zinc-800 text-sm font-bold font-['Satoshi'] underline leading-tight tracking-tight">
-                            Details
-                        </div>
-                    </div>
-
-                    {isActive && (
-                        <div
-                            className={`flex-1 ${
-                                isKickoff ? 'h-14' : ''
-                            } pl-5 pr-6 py-4 rounded-[120px] flex justify-center items-center gap-1 cursor-pointer ${
-                                isKickoff
-                                    ? 'bg-gradient-to-b from-red-400 to-red-600 shadow-[0px_4px_6px_-4px_rgba(0,0,0,0.10)] shadow-lg shadow-[inset_2px_2px_2px_0px_rgba(255,255,255,0.40)] shadow-[inset_-1px_-1px_3px_0px_rgba(0,0,0,0.25)] shadow-[inset_-7px_-8px_24px_6px_rgba(0,0,0,0.08)]'
-                                    : 'bg-green-100'
-                            }`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleStartActivation(bmp.id);
-                            }}
-                        >
-                            <div
-                                className={`justify-start text-sm font-bold font-['Satoshi'] leading-tight tracking-tight ${
-                                    isKickoff ? 'text-white' : 'text-zinc-800'
-                                }`}
-                            >
-                                {isKickoff ? 'Start Activation Now' : 'BPM Active'}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
+                title={bmp.title}
+                subtitle={bmp.subtitle}
+                description={bmp.description || ''}
+                onDetailsClick={() => handleBPMClick(bmp.id)}
+                onActivate={() => handleStartActivation(bmp.id)}
+                isKickoff={isKickoff}
+            />
         );
     };
 
@@ -340,56 +209,39 @@ export default function PodPage() {
     };
 
     const renderCultureCard = (item: CultureItem) => {
-        const isActive = item.status === 'active';
+        // Determine card type based on status
+        if (item.status === 'locked') {
+            return (
+                <LockedCard
+                    key={item.id}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    description={item.description}
+                />
+            );
+        }
 
+        if (item.status === 'ready') {
+            return (
+                <ReadyCard
+                    key={item.id}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    description={item.description}
+                    activateButtonText="Ready to Activate"
+                />
+            );
+        }
+
+        // status === 'active'
         return (
-            <div
+            <ActiveCard
                 key={item.id}
-                className={`w-80 min-h-60 p-4 rounded-2xl inline-flex flex-col justify-center items-start gap-6 ${
-                    isActive
-                        ? 'bg-white shadow-md shadow-[0px_2px_4px_-2px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-neutral-50'
-                        : 'bg-zinc-100 outline outline-1 outline-offset-[-1px] outline-stone-200'
-                }`}
-            >
-                {!isActive && (
-                    <div className="w-8 h-8 bg-zinc-800 rounded-md flex justify-center items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 12 14" fill="none">
-                            <path
-                                d="M9.99996 4.66667H9.33329V3.33333C9.33329 1.49333 7.83996 0 5.99996 0C4.15996 0 2.66663 1.49333 2.66663 3.33333V4.66667H1.99996C1.26663 4.66667 0.666626 5.26667 0.666626 6V12.6667C0.666626 13.4 1.26663 14 1.99996 14H9.99996C10.7333 14 11.3333 13.4 11.3333 12.6667V6C11.3333 5.26667 10.7333 4.66667 9.99996 4.66667ZM5.99996 10.6667C5.26663 10.6667 4.66663 10.0667 4.66663 9.33333C4.66663 8.6 5.26663 8 5.99996 8C6.73329 8 7.33329 8.6 7.33329 9.33333C7.33329 10.0667 6.73329 10.6667 5.99996 10.6667ZM8.06663 4.66667H3.93329V3.33333C3.93329 2.19333 4.85996 1.26667 5.99996 1.26667C7.13996 1.26667 8.06663 2.19333 8.06663 3.33333V4.66667Z"
-                                fill="white"
-                            />
-                        </svg>
-                    </div>
-                )}
-
-                <div className="self-stretch flex flex-col justify-start items-start">
-                    <div className="self-stretch justify-start text-zinc-800 text-base font-bold font-['Lato'] leading-normal tracking-tight">
-                        {item.title}
-                    </div>
-                    <div className="justify-center text-stone-400 text-xs font-medium font-['Satoshi'] leading-none tracking-tight">
-                        {item.subtitle}
-                    </div>
-                </div>
-
-                <div className="self-stretch justify-center text-zinc-800 text-xs font-normal font-['Satoshi'] leading-tight tracking-tight">
-                    {item.description}
-                </div>
-
-                {isActive && (
-                    <div className="self-stretch inline-flex justify-start items-center gap-3">
-                        <div className="p-2 rounded-[120px] flex justify-center items-center gap-1">
-                            <div className="justify-start text-zinc-800 text-sm font-bold font-['Satoshi'] underline leading-tight tracking-tight">
-                                Details
-                            </div>
-                        </div>
-                        <div className="flex-1 h-14 pl-5 pr-6 py-4 bg-gradient-to-b from-red-400 to-red-600 rounded-[120px] shadow-[0px_4px_6px_-4px_rgba(0,0,0,0.10)] shadow-lg shadow-[inset_2px_2px_2px_0px_rgba(255,255,255,0.40)] shadow-[inset_-1px_-1px_3px_0px_rgba(0,0,0,0.25)] shadow-[inset_-7px_-8px_24px_6px_rgba(0,0,0,0.08)] flex justify-center items-center gap-1">
-                            <div className="justify-start text-white text-sm font-bold font-['Satoshi'] leading-tight tracking-tight">
-                                Start Activation Now
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+                title={item.title}
+                subtitle={item.subtitle}
+                description={item.description}
+                isKickoff={true}
+            />
         );
     };
 
@@ -415,58 +267,39 @@ export default function PodPage() {
     };
 
     const renderSimpleCard = (item: SimpleItem) => {
-        const isActive = item.status === 'active';
+        // Determine card type based on status
+        if (item.status === 'locked') {
+            return (
+                <LockedCard
+                    key={item.id}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    description={item.description}
+                />
+            );
+        }
 
+        if (item.status === 'ready') {
+            return (
+                <ReadyCard
+                    key={item.id}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    description={item.description}
+                    activateButtonText="Ready to Activate"
+                />
+            );
+        }
+
+        // status === 'active'
         return (
-            <div
+            <ActiveCard
                 key={item.id}
-                className={`w-80 p-4 rounded-2xl inline-flex flex-col justify-center items-start gap-6 ${
-                    isActive
-                        ? 'bg-white shadow-md shadow-[0px_2px_4px_-2px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-neutral-50'
-                        : 'bg-zinc-100 outline outline-1 outline-offset-[-1px] outline-stone-200'
-                }`}
-            >
-                {!isActive && (
-                    <div className="w-8 h-8 bg-zinc-800 rounded-md flex justify-center items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 12 14" fill="none">
-                            <path
-                                d="M9.99996 4.66667H9.33329V3.33333C9.33329 1.49333 7.83996 0 5.99996 0C4.15996 0 2.66663 1.49333 2.66663 3.33333V4.66667H1.99996C1.26663 4.66667 0.666626 5.26667 0.666626 6V12.6667C0.666626 13.4 1.26663 14 1.99996 14H9.99996C10.7333 14 11.3333 13.4 11.3333 12.6667V6C11.3333 5.26667 10.7333 4.66667 9.99996 4.66667ZM5.99996 10.6667C5.26663 10.6667 4.66663 10.0667 4.66663 9.33333C4.66663 8.6 5.26663 8 5.99996 8C6.73329 8 7.33329 8.6 7.33329 9.33333C7.33329 10.0667 6.73329 10.6667 5.99996 10.6667ZM8.06663 4.66667H3.93329V3.33333C3.93329 2.19333 4.85996 1.26667 5.99996 1.26667C7.13996 1.26667 8.06663 2.19333 8.06663 3.33333V4.66667Z"
-                                fill="white"
-                            />
-                        </svg>
-                    </div>
-                )}
-
-                <div className="self-stretch flex flex-col justify-start items-start">
-                    <div className="self-stretch justify-start text-zinc-800 text-base font-bold font-['Lato'] leading-normal tracking-tight">
-                        {item.title}
-                    </div>
-                    {item.subtitle && (
-                        <div className="justify-center text-stone-400 text-xs font-medium font-['Satoshi'] leading-none tracking-tight">
-                            {item.subtitle}
-                        </div>
-                    )}
-                </div>
-
-                <div className="self-stretch justify-center text-zinc-800 text-xs font-normal font-['Satoshi'] leading-tight tracking-tight">
-                    {item.description}
-                </div>
-
-                {isActive && (
-                    <div className="self-stretch inline-flex justify-start items-center gap-3">
-                        <div className="p-2 rounded-[120px] flex justify-center items-center gap-1">
-                            <div className="justify-start text-zinc-800 text-sm font-bold font-['Satoshi'] underline leading-tight tracking-tight">
-                                Details
-                            </div>
-                        </div>
-                        <div className="flex-1 h-14 pl-5 pr-6 py-4 bg-gradient-to-b from-red-400 to-red-600 rounded-[120px] shadow-[0px_4px_6px_-4px_rgba(0,0,0,0.10)] shadow-lg shadow-[inset_2px_2px_2px_0px_rgba(255,255,255,0.40)] shadow-[inset_-1px_-1px_3px_0px_rgba(0,0,0,0.25)] shadow-[inset_-7px_-8px_24px_6px_rgba(0,0,0,0.08)] flex justify-center items-center gap-1">
-                            <div className="justify-start text-white text-sm font-bold font-['Satoshi'] leading-tight tracking-tight">
-                                Start Activation Now
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+                title={item.title}
+                subtitle={item.subtitle}
+                description={item.description}
+                isKickoff={true}
+            />
         );
     };
 
@@ -480,7 +313,7 @@ export default function PodPage() {
         );
     };
 
-    const renderSectionedTabSection = (section: { id: string; title: string; items: SimpleItem[] }) => {
+    const renderSectionedTabSection = (section: CultureSection) => {
         return (
             <div key={section.id} className="self-stretch flex flex-col justify-start items-start gap-6">
                 <div className="self-stretch inline-flex justify-start items-center gap-6">
@@ -630,11 +463,11 @@ export default function PodPage() {
             {/* Content Area */}
             <div className="w-full px-6 py-16 bg-white inline-flex flex-col justify-center items-center gap-12">
                 {activeTab === 'Team Directory' && (
-                    <>
+                    <div className="self-stretch px-28 py-16 bg-white inline-flex flex-col justify-center items-center gap-12">
                         {renderBPMSection('leadership')}
                         {renderBPMSection('execution')}
                         {renderBPMSection('visibility')}
-                    </>
+                    </div>
                 )}
 
                 {activeTab === 'Culture' && podData?.culture && (
@@ -643,7 +476,7 @@ export default function PodPage() {
                     </div>
                 )}
 
-                {activeTab === 'Marketing' && podData?.marketing && renderSimpleTabSection(podData.marketing)}
+                {activeTab === 'Marketing' && podData?.marketing && renderSectionedTab(podData.marketing)}
 
                 {activeTab === 'Strategic Partners' && podData?.strategicPartners && renderSectionedTab(podData.strategicPartners)}
 

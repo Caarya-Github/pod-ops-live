@@ -1,0 +1,173 @@
+# Services Configuration
+# This file defines all services offered, organized by sections
+
+sections:
+  # ============================================
+  # CORE SERVICES
+  # ============================================
+  - id: "core-services"
+    title: "Core Services"
+    items:
+      - id: "consulting"
+        title: "Strategy Consulting"
+        subtitle: "Service / Core"
+        description: "Expert guidance on business strategy, organizational design, and operational planning to achieve your goals and drive sustainable growth."
+
+      - id: "implementation"
+        title: "Implementation Services"
+        subtitle: "Service / Core"
+        description: "End-to-end implementation and deployment support including planning, configuration, integration, testing, and go-live assistance."
+
+      - id: "training"
+        title: "Training & Enablement"
+        subtitle: "Service / Core"
+        description: "Comprehensive training programs for your team covering product usage, best practices, and advanced techniques for maximum value."
+
+      - id: "project-management"
+        title: "Project Management"
+        subtitle: "Service / Core"
+        description: "Professional project management services to ensure on-time, on-budget delivery with clear communication and risk management."
+
+      - id: "integration"
+        title: "Systems Integration"
+        subtitle: "Service / Core"
+        description: "Connect your systems and tools seamlessly with custom integrations, APIs, and data synchronization solutions."
+
+      - id: "migration"
+        title: "Data Migration Services"
+        subtitle: "Service / Core"
+        description: "Secure and reliable data migration from legacy systems with validation, transformation, and zero data loss guarantee."
+
+  # ============================================
+  # SUPPORT SERVICES
+  # ============================================
+  - id: "support-services"
+    title: "Support Services"
+    items:
+      - id: "24-7-support"
+        title: "24/7 Technical Support"
+        subtitle: "Service / Support"
+        description: "Round-the-clock technical assistance via phone, email, and chat with guaranteed response times for critical issues."
+
+      - id: "maintenance"
+        title: "Ongoing Maintenance"
+        subtitle: "Service / Support"
+        description: "Continuous monitoring, maintenance, updates, and optimization to ensure system reliability and peak performance."
+
+      - id: "helpdesk"
+        title: "Dedicated Helpdesk"
+        subtitle: "Service / Support"
+        description: "Expert helpdesk team to answer questions, resolve issues, and provide guidance on product usage and troubleshooting."
+
+      - id: "health-checks"
+        title: "System Health Checks"
+        subtitle: "Service / Support"
+        description: "Regular system audits and health checks to identify issues, optimize performance, and ensure security compliance."
+
+      - id: "incident-management"
+        title: "Incident Management"
+        subtitle: "Service / Support"
+        description: "Rapid incident response and resolution with clear escalation paths, root cause analysis, and prevention measures."
+
+      - id: "updates-upgrades"
+        title: "Updates & Upgrades"
+        subtitle: "Service / Support"
+        description: "Managed updates and version upgrades with minimal downtime, testing, and rollback capabilities if needed."
+
+  # ============================================
+  # PREMIUM SERVICES
+  # ============================================
+  - id: "premium-services"
+    title: "Premium Services"
+    items:
+      - id: "custom-development"
+        title: "Custom Development"
+        subtitle: "Service / Premium"
+        description: "Tailored solutions built to your exact specifications including custom features, modules, and integrations."
+
+      - id: "dedicated-team"
+        title: "Dedicated Development Team"
+        subtitle: "Service / Premium"
+        description: "Exclusive team of developers, designers, and project managers assigned to work on your projects full-time."
+
+      - id: "white-glove"
+        title: "White Glove Service"
+        subtitle: "Service / Premium"
+        description: "Premium concierge service with priority support, dedicated resources, and personalized attention for VIP clients."
+
+      - id: "architecture-review"
+        title: "Architecture Review"
+        subtitle: "Service / Premium"
+        description: "Expert review of your technical architecture with recommendations for scalability, security, and performance optimization."
+
+      - id: "performance-optimization"
+        title: "Performance Optimization"
+        subtitle: "Service / Premium"
+        description: "Deep analysis and optimization of system performance including code profiling, database tuning, and infrastructure improvements."
+
+      - id: "security-audit"
+        title: "Security Audit & Hardening"
+        subtitle: "Service / Premium"
+        description: "Comprehensive security assessment and hardening to protect against vulnerabilities and ensure compliance standards."
+
+  # ============================================
+  # MANAGED SERVICES
+  # ============================================
+  - id: "managed-services"
+    title: "Managed Services"
+    items:
+      - id: "infrastructure-management"
+        title: "Managed Infrastructure"
+        subtitle: "Service / Managed"
+        description: "Complete infrastructure management including servers, databases, networking, and security with 99.9% uptime SLA."
+
+      - id: "application-management"
+        title: "Managed Applications"
+        subtitle: "Service / Managed"
+        description: "Full application lifecycle management including monitoring, updates, optimization, and issue resolution."
+
+      - id: "database-management"
+        title: "Managed Databases"
+        subtitle: "Service / Managed"
+        description: "Expert database administration with backups, performance tuning, security, and disaster recovery planning."
+
+      - id: "security-management"
+        title: "Managed Security"
+        subtitle: "Service / Managed"
+        description: "24/7 security monitoring, threat detection, incident response, and compliance management as a managed service."
+
+      - id: "backup-recovery"
+        title: "Backup & Disaster Recovery"
+        subtitle: "Service / Managed"
+        description: "Automated backups, disaster recovery planning, and business continuity to protect against data loss and downtime."
+
+  # ============================================
+  # PROFESSIONAL SERVICES
+  # ============================================
+  - id: "professional-services"
+    title: "Professional Services"
+    items:
+      - id: "assessment"
+        title: "Readiness Assessment"
+        subtitle: "Service / Professional"
+        description: "Comprehensive assessment of current state, readiness for change, and recommended roadmap for successful implementation."
+
+      - id: "workshops"
+        title: "Facilitated Workshops"
+        subtitle: "Service / Professional"
+        description: "Interactive workshops for requirements gathering, design thinking, process mapping, and collaborative problem-solving."
+
+      - id: "change-management"
+        title: "Change Management"
+        subtitle: "Service / Professional"
+        description: "Structured change management approach to ensure smooth adoption, minimize resistance, and maximize user engagement."
+
+      - id: "optimization"
+        title: "Process Optimization"
+        subtitle: "Service / Professional"
+        description: "Analyze and optimize your business processes for efficiency, automation, and better outcomes using best practices."
+
+      - id: "documentation"
+        title: "Documentation Services"
+        subtitle: "Service / Professional"
+        description: "Professional documentation creation including user guides, technical specs, SOPs, and knowledge base articles."

@@ -1,0 +1,144 @@
+# BMPs (Best Management Practices) Configuration
+# This file defines all BMP cards organized by category
+
+bmps:
+  # ============================================
+  # LEADERSHIP CATEGORY
+  # ============================================
+  - id: "kickoff-caarya"
+    title: "Kickoff Caarya"
+    subtitle: "BMP / Leadership"
+    description: "Complete the initial pod setup including team introductions, goal setting, and establishing working norms. This is your foundation for success."
+    category: "leadership"
+
+  - id: "weekly-pod-sync"
+    title: "Weekly Pod Sync"
+    subtitle: "BMP / Leadership"
+    description: "Hold a weekly alignment meeting with all pod members to review progress, discuss challenges, and plan the week ahead. Keep everyone connected and informed."
+    category: "leadership"
+
+  - id: "okr-planning"
+    title: "OKR Planning Session"
+    subtitle: "BMP / Leadership"
+    description: "Set quarterly Objectives and Key Results (OKRs) that align with organizational goals. Define clear, measurable outcomes for your pod."
+    category: "leadership"
+
+  - id: "pod-retrospective"
+    title: "Pod Retrospective"
+    subtitle: "BMP / Leadership"
+    description: "Reflect on what's working and what needs improvement. Create actionable insights to continuously evolve your pod's practices."
+    category: "leadership"
+
+  - id: "leadership-1-on-1"
+    title: "Leadership 1-on-1s"
+    subtitle: "BMP / Leadership"
+    description: "Regular individual check-ins between pod leads and members. Build trust, provide feedback, and support personal growth."
+    category: "leadership"
+
+  - id: "strategic-planning"
+    title: "Strategic Planning"
+    subtitle: "BMP / Leadership"
+    description: "Quarterly strategic planning sessions to set direction, identify opportunities, and align on priorities for the upcoming quarter."
+    category: "leadership"
+
+  # ============================================
+  # EXECUTION CATEGORY
+  # ============================================
+  - id: "daily-standup"
+    title: "Daily Standup"
+    subtitle: "BMP / Execution"
+    description: "15-minute daily sync to share progress, plans for the day, and blockers. Keep the pod aligned and moving forward together."
+    category: "execution"
+
+  - id: "sprint-planning"
+    title: "Sprint Planning"
+    subtitle: "BMP / Execution"
+    description: "Plan your 1-2 week sprint by selecting work items, estimating effort, and committing to deliverables as a team."
+    category: "execution"
+
+  - id: "task-prioritization"
+    title: "Task Prioritization"
+    subtitle: "BMP / Execution"
+    description: "Regularly review and prioritize the backlog using frameworks like RICE or MoSCoW to ensure you're working on what matters most."
+    category: "execution"
+
+  - id: "sprint-review"
+    title: "Sprint Review"
+    subtitle: "BMP / Execution"
+    description: "Demonstrate completed work to stakeholders, gather feedback, and celebrate achievements at the end of each sprint."
+    category: "execution"
+
+  - id: "wip-limits"
+    title: "Work-in-Progress Limits"
+    subtitle: "BMP / Execution"
+    description: "Establish and maintain WIP limits to improve focus, reduce context switching, and increase throughput."
+    category: "execution"
+
+  - id: "definition-of-done"
+    title: "Definition of Done"
+    subtitle: "BMP / Execution"
+    description: "Create a clear checklist that defines when work is truly complete, ensuring quality and consistency across deliverables."
+    category: "execution"
+
+  - id: "pair-programming"
+    title: "Pair Programming"
+    subtitle: "BMP / Execution"
+    description: "Collaborate in pairs on complex tasks to improve code quality, share knowledge, and reduce errors."
+    category: "execution"
+
+  - id: "code-reviews"
+    title: "Code Reviews"
+    subtitle: "BMP / Execution"
+    description: "Systematic peer review of code changes to maintain quality, share knowledge, and catch issues early."
+    category: "execution"
+
+  # ============================================
+  # VISIBILITY CATEGORY
+  # ============================================
+  - id: "health-dashboard"
+    title: "Pod Health Dashboard"
+    subtitle: "BMP / Visibility"
+    description: "Monitor key metrics like velocity, cycle time, and team satisfaction. Make data-driven decisions to improve performance."
+    category: "visibility"
+
+  - id: "burndown-tracking"
+    title: "Burndown Tracking"
+    subtitle: "BMP / Visibility"
+    description: "Track sprint progress with burndown charts to visualize remaining work and identify potential delivery risks early."
+    category: "visibility"
+
+  - id: "metrics-review"
+    title: "Metrics Review"
+    subtitle: "BMP / Visibility"
+    description: "Monthly review of pod performance metrics including throughput, quality, and team health indicators."
+    category: "visibility"
+
+  - id: "stakeholder-updates"
+    title: "Stakeholder Updates"
+    subtitle: "BMP / Visibility"
+    description: "Regular communication to stakeholders about pod progress, achievements, and challenges. Keep everyone informed."
+    category: "visibility"
+
+  - id: "documentation-standards"
+    title: "Documentation Standards"
+    subtitle: "BMP / Visibility"
+    description: "Maintain up-to-date documentation for processes, decisions, and systems to ensure knowledge is accessible to all."
+    category: "visibility"
+
+  - id: "incident-postmortems"
+    title: "Incident Postmortems"
+    subtitle: "BMP / Visibility"
+    description: "Blameless analysis of incidents to identify root causes, document learnings, and prevent future occurrences."
+    category: "visibility"
+
+  - id: "capacity-planning"
+    title: "Capacity Planning"
+    subtitle: "BMP / Visibility"
+    description: "Track and forecast pod capacity considering vacations, holidays, and other commitments to set realistic expectations."
+    category: "visibility"
+
+  - id: "dependency-mapping"
+    title: "Dependency Mapping"
+    subtitle: "BMP / Visibility"
+    description: "Visualize and track dependencies on other teams or systems to proactively manage risks and coordinate work."
+    category: "visibility"
