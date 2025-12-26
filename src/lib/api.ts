@@ -1,7 +1,7 @@
 import { ApiResponse, ApiPod, Pod, PodDetailsResponse, CollegeResponse } from './types';
 import { loadPodData, mergePodDataWithUnlocks } from './dataLoader';
 
-const API_BASE_URL = 'https://moksha-be-940979680786.europe-west2.run.app/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface PodUnlocksResponse {
   unlockedBmps: string[];
