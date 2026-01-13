@@ -1,47 +1,92 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, FileText } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Calendar, FileText, Loader2 } from 'lucide-react';
+import { workReportApi, WorkReportUser, WorkReportSummary } from '@/lib/spaApi';
 
 interface TeamMember {
-  id: number;
+  id: string;
   name: string;
-  avatar: string;
+  avatar?: string;
   workPlan: 'not-submitted' | 'on-leave' | 'submitted';
   dsr: 'not-submitted' | 'pending' | 'approved' | 'flagged';
 }
 
 export default function WorkReports() {
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly'>('daily');
-  const [currentDate, setCurrentDate] = useState(new Date('2025-11-12'));
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [stats, setStats] = useState({
+    membersWorking: { submitted: 0, total: 0 },
+    workPlans: { submitted: 0, total: 0 },
+    dsrs: { submitted: 0, total: 0 },
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const teamMembers: TeamMember[] = [
-    { id: 1, name: 'Kathryn Murphy', avatar: 'https://i.pravatar.cc/150?img=1', workPlan: 'not-submitted', dsr: 'not-submitted' },
-    { id: 2, name: 'Kathryn Murphy', avatar: 'https://i.pravatar.cc/150?img=2', workPlan: 'on-leave', dsr: 'pending' },
-    { id: 3, name: 'Kathryn Murphy', avatar: 'https://i.pravatar.cc/150?img=3', workPlan: 'submitted', dsr: 'approved' },
-    { id: 4, name: 'Kathryn Murphy', avatar: 'https://i.pravatar.cc/150?img=4', workPlan: 'submitted', dsr: 'flagged' },
-    { id: 5, name: 'Kathryn Murphy', avatar: 'https://i.pravatar.cc/150?img=5', workPlan: 'submitted', dsr: 'approved' },
-  ];
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
+  const formatDate = useCallback((date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
     });
-  };
+  }, []);
 
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
-    setCurrentDate(newDate);
-  };
+  const formatDateForApi = useCallback((date: Date) => {
+    return date.toISOString().split('T')[0];
+  }, []);
+
+  const navigateDate = useCallback((direction: 'prev' | 'next') => {
+    setCurrentDate((prev) => {
+      const newDate = new Date(prev);
+      newDate.setDate(prev.getDate() + (direction === 'next' ? 1 : -1));
+      return newDate;
+    });
+  }, []);
+
+  const fetchWorkReportData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const dateStr = formatDateForApi(currentDate);
+      const summary: WorkReportSummary = await workReportApi.getWorkReportSummary(dateStr);
+
+      // Map API users to team members
+      const members: TeamMember[] = summary.users.map((user) => ({
+        id: user.userId,
+        name: user.name,
+        avatar: user.avatar,
+        workPlan: user.workPlanStatus,
+        dsr: user.dsrStatus,
+      }));
+
+      setTeamMembers(members);
+      setStats({
+        membersWorking: { submitted: summary.usersWorkingToday, total: summary.totalUsers },
+        workPlans: { submitted: summary.workPlansSubmitted, total: summary.totalUsers },
+        dsrs: { submitted: summary.dsrsSubmitted, total: summary.totalUsers },
+      });
+    } catch (err: any) {
+      console.error('Error fetching work report:', err);
+      setError(err.message || 'Failed to load work report data');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentDate, formatDateForApi]);
+
+  useEffect(() => {
+    fetchWorkReportData();
+  }, [fetchWorkReportData]);
 
   const getWorkPlanStatus = (status: string) => {
     switch (status) {
       case 'not-submitted':
-        return <span className="text-red-500 flex items-center gap-1"><span className="text-lg">!</span> Not Submitted</span>;
+        return (
+          <span className="text-red-500 flex items-center gap-1">
+            <span className="text-lg">!</span> Not Submitted
+          </span>
+        );
       case 'on-leave':
         return <span className="text-gray-500">On Leave</span>;
       case 'submitted':
@@ -52,25 +97,41 @@ export default function WorkReports() {
   };
 
   const getDsrBadge = (status: string) => {
-    const badges = {
+    const badges: Record<string, string> = {
       'not-submitted': 'bg-gray-100 text-gray-600 border border-gray-300',
-      'pending': 'bg-blue-50 text-blue-600 border border-blue-200',
-      'approved': 'bg-green-50 text-green-600 border border-green-200',
-      'flagged': 'bg-orange-50 text-orange-600 border border-orange-200',
+      pending: 'bg-blue-50 text-blue-600 border border-blue-200',
+      approved: 'bg-green-50 text-green-600 border border-green-200',
+      flagged: 'bg-orange-50 text-orange-600 border border-orange-200',
     };
 
-    const labels = {
+    const labels: Record<string, string> = {
       'not-submitted': 'Not Submitted',
-      'pending': 'Pending Review',
-      'approved': 'Approved ✓',
-      'flagged': 'Flagged 🚩',
+      pending: 'Pending Review',
+      approved: 'Approved ✓',
+      flagged: 'Flagged 🚩',
     };
 
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${badges[status as keyof typeof badges]}`}>
-        {labels[status as keyof typeof labels]}
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-medium ${
+          badges[status as keyof typeof badges] || badges['not-submitted']
+        }`}
+      >
+        {labels[status as keyof typeof labels] || labels['not-submitted']}
       </span>
     );
+  };
+
+  // Generate avatar URL from name if avatar is not provided
+  const getAvatarUrl = (name: string, avatar?: string) => {
+    if (avatar) return avatar;
+    const initials = name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=40`;
   };
 
   return (
@@ -81,11 +142,13 @@ export default function WorkReports() {
           <div className="flex justify-between items-start mb-2">
             <div>
               <h1 className="text-2xl font-bold text-red-500 mb-1">Work Reports</h1>
-              <p className="text-gray-500 text-sm">Track and acknowledge the daily work reports of pod members here</p>
+              <p className="text-gray-500 text-sm">
+                Track and acknowledge the daily work reports of pod members here
+              </p>
             </div>
             <div className="text-right text-sm text-gray-500">
-              <div>Jan 20, 2023</div>
-              <div>3:20 PM</div>
+              <div>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+              <div>{new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</div>
             </div>
           </div>
         </div>
@@ -96,9 +159,7 @@ export default function WorkReports() {
             <button
               onClick={() => setActiveTab('daily')}
               className={`pb-3 px-1 relative ${
-                activeTab === 'daily'
-                  ? 'text-gray-900 font-medium'
-                  : 'text-gray-500'
+                activeTab === 'daily' ? 'text-gray-900 font-medium' : 'text-gray-500'
               }`}
             >
               Daily
@@ -109,9 +170,7 @@ export default function WorkReports() {
             <button
               onClick={() => setActiveTab('weekly')}
               className={`pb-3 px-1 relative ${
-                activeTab === 'weekly'
-                  ? 'text-gray-900 font-medium'
-                  : 'text-gray-500'
+                activeTab === 'weekly' ? 'text-gray-900 font-medium' : 'text-gray-500'
               }`}
             >
               Weekly
@@ -125,7 +184,7 @@ export default function WorkReports() {
         {/* Date Navigation and Actions */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => navigateDate('prev')}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
             >
@@ -134,7 +193,7 @@ export default function WorkReports() {
             <span className="text-gray-900 font-medium min-w-[200px] text-center">
               {formatDate(currentDate)}
             </span>
-            <button 
+            <button
               onClick={() => navigateDate('next')}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
             >
@@ -157,85 +216,139 @@ export default function WorkReports() {
         {/* Stats Cards */}
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg">
-            <div className="text-4xl font-bold text-gray-900 mb-2">00 / 00</div>
+            <div className="text-4xl font-bold text-gray-900 mb-2">
+              {stats.membersWorking.submitted} / {stats.membersWorking.total}
+            </div>
             <div className="text-gray-500 text-sm">Members Working Today</div>
           </div>
           <div className="bg-white p-6 rounded-lg">
-            <div className="text-4xl font-bold text-gray-900 mb-2">00 / 00</div>
+            <div className="text-4xl font-bold text-gray-900 mb-2">
+              {stats.workPlans.submitted} / {stats.workPlans.total}
+            </div>
             <div className="text-gray-500 text-sm">Daily Plan Submitted</div>
           </div>
           <div className="bg-white p-6 rounded-lg">
-            <div className="text-4xl font-bold text-gray-900 mb-2">00 / 00</div>
+            <div className="text-4xl font-bold text-gray-900 mb-2">
+              {stats.dsrs.submitted} / {stats.dsrs.total}
+            </div>
             <div className="text-gray-500 text-sm">DSR Submitted</div>
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-700">
-                  <div className="flex items-center gap-2">
-                    Member
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
-                  </div>
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-700">
-                  <div className="flex items-center gap-2">
-                    Work Plan
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
-                  </div>
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-700">
-                  <div className="flex items-center gap-2">
-                    DSR
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
-                  </div>
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {teamMembers.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={member.avatar} 
-                        alt={member.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <span className="text-gray-900 font-medium">{member.name}</span>
+        {!loading && !error && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-2">
+                      Member
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                        />
+                      </svg>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {getWorkPlanStatus(member.workPlan)}
-                  </td>
-                  <td className="px-6 py-4">
-                    {getDsrBadge(member.dsr)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="text-gray-400 hover:text-gray-600 text-sm font-medium underline transition">
-                      View Report
-                    </button>
-                  </td>
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-2">
+                      Work Plan
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                        />
+                      </svg>
+                    </div>
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-2">
+                      DSR
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                        />
+                      </svg>
+                    </div>
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-gray-700">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {teamMembers.map((member) => (
+                  <tr key={member.id} className="hover:bg-gray-50 transition">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={getAvatarUrl(member.name, member.avatar)}
+                          alt={member.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <span className="text-gray-900 font-medium">{member.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{getWorkPlanStatus(member.workPlan)}</td>
+                    <td className="px-6 py-4">{getDsrBadge(member.dsr)}</td>
+                    <td className="px-6 py-4">
+                      <button className="text-gray-400 hover:text-gray-600 text-sm font-medium underline transition">
+                        View Report
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {teamMembers.length === 0 && !loading && (
+              <div className="py-12 text-center text-gray-500">
+                No team members found
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Pagination hint */}
-        <div className="mt-4 text-center text-gray-400 text-sm">
-          View DSR
-        </div>
+        <div className="mt-4 text-center text-gray-400 text-sm">View DSR</div>
       </div>
     </div>
   );

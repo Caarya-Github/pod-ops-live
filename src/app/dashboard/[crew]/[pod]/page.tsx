@@ -2,12 +2,26 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { fetchPods, fetchPodDetails } from '@/lib/api';
-import { Pod, PodDetailsResponse, BMP, SimpleItem, CultureSection, CultureItem, SectionedTabData, SimpleTabData } from '@/lib/types';
+import { fetchPods, fetchPodDetails, fetchAllAssets } from '@/lib/api';
+import { Pod, PodDetailsResponse, BMP, SimpleItem, CultureSection, CultureItem, SectionedTabData, SimpleTabData, Asset } from '@/lib/types';
 import Navbar from '@/components/Navbar';
 import { LockedCard, ReadyCard, ActiveCard } from '@/components/PodCards';
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
+import { clearCache } from '@/lib/dataLoader';
+
+// Extend types to include assets
+interface BMPWithAssets extends BMP {
+    assets?: Asset[];
+}
+
+interface CultureItemWithAssets extends CultureItem {
+    assets?: Asset[];
+}
+
+interface SimpleItemWithAssets extends SimpleItem {
+    assets?: Asset[];
+}
 
 // All interfaces are now imported from @/lib/types
 
@@ -33,6 +47,7 @@ export default function PodPage() {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabType>('Team Directory');
     const [selectedBPM, setSelectedBPM] = useState<string | null>(null);
+    const [itemAssets, setItemAssets] = useState<Record<string, Asset[]>>({});
 
     const crew = params.crew as string;
     const podSlug = params.pod as string;
@@ -41,6 +56,8 @@ export default function PodPage() {
         const loadPod = async () => {
             try {
                 setLoading(true);
+                // Clear cache to ensure fresh data
+                clearCache();
                 const allPods = await fetchPods();
 
                 const foundPod = allPods.find((p) => {
@@ -106,6 +123,31 @@ export default function PodPage() {
                             updatedAt: ''
                         });
                     }
+
+                    // Fetch assets and map them to items
+                    try {
+                        const assets = await fetchAllAssets();
+                        console.log('=== ASSET DEBUG ===');
+                        console.log('Raw assets from API:', assets.length);
+                        if (assets.length > 0) {
+                            console.log('First asset sample:', JSON.stringify(assets[0], null, 2));
+                        }
+                        // Create a map of unlock_id -> assets
+                        const assetsMap: Record<string, Asset[]> = {};
+                        assets.forEach(asset => {
+                            const unlockId = asset.unlock_id;
+                            console.log(`Asset "${asset.title}" has unlock_id:`, unlockId);
+                            if (!assetsMap[unlockId]) {
+                                assetsMap[unlockId] = [];
+                            }
+                            assetsMap[unlockId].push(asset);
+                        });
+                        setItemAssets(assetsMap);
+                        console.log('Assets map keys:', Object.keys(assetsMap));
+                        console.log('=== END ASSET DEBUG ===');
+                    } catch (assetsError) {
+                        console.error('Error fetching assets:', assetsError);
+                    }
                 } else {
                     setError('Pod not found');
                 }
@@ -128,8 +170,17 @@ export default function PodPage() {
         console.log('Starting activation for:', bmpId);
     };
 
+    const getAssetsForItem = (itemId: string): Asset[] => {
+        const assets = itemAssets[itemId] || [];
+        if (assets.length > 0) {
+            console.log(`Found ${assets.length} assets for item "${itemId}"`);
+        }
+        return assets;
+    };
+
     const renderBPMCard = (bmp: BMP) => {
         const isKickoff = bmp.id === 'kickoff-caarya';
+        const assets = getAssetsForItem(bmp.id);
 
         // Determine card type based on status
         if (bmp.status === 'locked') {
@@ -139,6 +190,7 @@ export default function PodPage() {
                     title={bmp.title}
                     subtitle={bmp.subtitle}
                     description={bmp.description || ''}
+                    assets={assets}
                     onDetailsClick={() => handleBPMClick(bmp.id)}
                 />
             );
@@ -151,6 +203,7 @@ export default function PodPage() {
                     title={bmp.title}
                     subtitle={bmp.subtitle}
                     description={bmp.description || ''}
+                    assets={assets}
                     onDetailsClick={() => handleBPMClick(bmp.id)}
                     onActivate={() => handleStartActivation(bmp.id)}
                     activateButtonText="Ready to Activate"
@@ -165,6 +218,7 @@ export default function PodPage() {
                 title={bmp.title}
                 subtitle={bmp.subtitle}
                 description={bmp.description || ''}
+                assets={assets}
                 onDetailsClick={() => handleBPMClick(bmp.id)}
                 onActivate={() => handleStartActivation(bmp.id)}
                 isKickoff={isKickoff}
@@ -209,6 +263,8 @@ export default function PodPage() {
     };
 
     const renderCultureCard = (item: CultureItem) => {
+        const assets = getAssetsForItem(item.id);
+
         // Determine card type based on status
         if (item.status === 'locked') {
             return (
@@ -217,6 +273,7 @@ export default function PodPage() {
                     title={item.title}
                     subtitle={item.subtitle}
                     description={item.description}
+                    assets={assets}
                 />
             );
         }
@@ -228,6 +285,7 @@ export default function PodPage() {
                     title={item.title}
                     subtitle={item.subtitle}
                     description={item.description}
+                    assets={assets}
                     activateButtonText="Ready to Activate"
                 />
             );
@@ -240,6 +298,7 @@ export default function PodPage() {
                 title={item.title}
                 subtitle={item.subtitle}
                 description={item.description}
+                assets={assets}
                 isKickoff={true}
             />
         );
@@ -267,6 +326,8 @@ export default function PodPage() {
     };
 
     const renderSimpleCard = (item: SimpleItem) => {
+        const assets = getAssetsForItem(item.id);
+
         // Determine card type based on status
         if (item.status === 'locked') {
             return (
@@ -275,6 +336,7 @@ export default function PodPage() {
                     title={item.title}
                     subtitle={item.subtitle}
                     description={item.description}
+                    assets={assets}
                 />
             );
         }
@@ -286,6 +348,7 @@ export default function PodPage() {
                     title={item.title}
                     subtitle={item.subtitle}
                     description={item.description}
+                    assets={assets}
                     activateButtonText="Ready to Activate"
                 />
             );
@@ -298,6 +361,7 @@ export default function PodPage() {
                 title={item.title}
                 subtitle={item.subtitle}
                 description={item.description}
+                assets={assets}
                 isKickoff={true}
             />
         );
@@ -433,7 +497,7 @@ export default function PodPage() {
 
             {/* Navigation Tabs */}
             <div className="w-full px-6 bg-white border-b-2 border-zinc-100 inline-flex justify-start items-center">
-                {podData?.tabs.map((tab) => (
+                {['Team Directory', 'BPMs', 'Culture', 'Marketing', 'Strategic Partners', 'Partner Relations', 'Services'].map((tab) => (
                     <div
                         key={tab}
                         className={`px-5 py-4 flex justify-start items-center gap-2 cursor-pointer transition-all hover:bg-gray-50 ${

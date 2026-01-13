@@ -13,6 +13,29 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
+// ==================== WORK REPORT TYPES ====================
+
+export interface WorkReportUser {
+  userId: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  avatar?: string;
+  workPlanStatus: 'submitted' | 'not-submitted' | 'on-leave';
+  dsrStatus: 'not-submitted' | 'pending' | 'approved' | 'flagged';
+  totalDSRsSubmitted: number;
+  workingDayNumber?: number;
+}
+
+export interface WorkReportSummary {
+  date: string;
+  totalUsers: number;
+  usersWorkingToday: number;
+  workPlansSubmitted: number;
+  dsrsSubmitted: number;
+  users: WorkReportUser[];
+}
+
 // Helper function to get auth token
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -172,5 +195,23 @@ export const pocApi = {
     await apiRequest(`/spa/pocs/${id}`, {
       method: 'DELETE',
     });
+  },
+};
+
+// ==================== WORK REPORT API ====================
+
+export const workReportApi = {
+  // Get work report summary for a specific date
+  async getWorkReportSummary(date?: string): Promise<WorkReportSummary> {
+    const params = date ? `?date=${date}` : '';
+    const result = await apiRequest<WorkReportSummary>(
+      `/admin/dsr-analytics/work-report/summary${params}`
+    );
+    return result.data!;
+  },
+
+  // Get today's work report summary
+  async getTodaysWorkReport(): Promise<WorkReportSummary> {
+    return this.getWorkReportSummary();
   },
 };

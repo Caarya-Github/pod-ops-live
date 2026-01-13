@@ -33,6 +33,27 @@ export interface Crew {
   pods: Pod[];
 }
 
+// Unlock content types from API
+export interface UnlockItem {
+  _id: string;
+  name: string;
+  subtitle: string;
+  desc: string;
+  category: string;
+  tabName: 'bmps' | 'culture' | 'marketing' | 'strategicPartners' | 'partnerRelations' | 'services';
+  itemId: string;
+  department_id: string;
+}
+
+export interface UnlocksByTab {
+  bmps: UnlockItem[];
+  culture: UnlockItem[];
+  marketing: UnlockItem[];
+  strategicPartners: UnlockItem[];
+  partnerRelations: UnlockItem[];
+  services: UnlockItem[];
+}
+
 // Pod Details Types
 export interface BMP {
   id: string;
@@ -121,4 +142,55 @@ export interface CollegeResponse {
     unlockedPartnerRelations: string[];
     unlockedServices: string[];
   };
+}
+
+// Unlock progress types
+export interface Asset {
+  _id: string;
+  title: string;
+  desc: string;
+  unlock_id: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Deliverable {
+  id: string;
+  title: string;
+  completed: boolean;
+  completedAt?: string;
+}
+
+export interface PodUnlockProgress {
+  unlockId: string;
+  stageId: string;
+  deliverables: Deliverable[];
+  status: 'pending' | 'in-progress' | 'completed';
+  progress: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Stage {
+  _id: string;
+  name: string;
+  unlocks: string[];
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Unlock {
+  _id: string;
+  name: string;
+  subtitle: string;
+  desc: string;
+  category: string;
+  department_id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StageWithUnlocks extends Stage {
+  unlocksData: Unlock[];
 }
