@@ -1,4 +1,4 @@
-import { UnlocksByTab, BMP, CultureData, SectionedTabData, PodUnlockProgress } from './types';
+import { UnlocksByTab, BMP, CultureData, SectionedTabData, PodActivation } from './types';
 import { fetchUnlocksByTab } from './api';
 
 // Parsed data cache
@@ -9,11 +9,21 @@ let cachedData: UnlocksByTab | null = null;
  */
 export async function loadUnlockContent(): Promise<UnlocksByTab> {
   if (cachedData) {
+    console.log('[DataLoader] Using cached unlock content');
     return cachedData;
   }
 
   try {
     const data = await fetchUnlocksByTab();
+    console.log('[DataLoader] Fetched unlock content:', {
+      bmps: data.bmps.length,
+      culture: data.culture.length,
+      marketing: data.marketing.length,
+      marketingCategories: [...new Set(data.marketing.map(m => m.category || 'undefined'))],
+      strategicPartners: data.strategicPartners.length,
+      partnerRelations: data.partnerRelations.length,
+      services: data.services.length,
+    });
     cachedData = data;
     return cachedData;
   } catch (error) {
@@ -129,73 +139,52 @@ export function mergePodDataWithUnlocks(
     }))
   };
 
-  // Merge Marketing items with unlock states
-  const marketingWithStatus: SectionedTabData = {
-    sections: unlockContent.marketing.length > 0 ? [
-      {
-        id: 'general',
-        title: 'General',
-        items: unlockContent.marketing.map(item => ({
-          id: item.itemId,
-          title: item.name,
-          subtitle: item.subtitle,
-          description: item.desc,
-          status: unlocks.unlockedMarketing.includes(item.itemId) ? 'active' as const : 'locked' as const
-        }))
-      }
-    ] : []
-  };
+  /**
+   * Helper to group items by category into sections (for mergePodDataWithUnlocks)
+   */
+  function groupItemsByCategoryForUnlocks<T extends { itemId: string; name: string; subtitle?: string; desc: string; category?: string }>(
+    items: T[],
+    unlockedIds: string[]
+  ): SectionedTabData {
+    if (items.length === 0) return { sections: [] };
 
-  // Merge Strategic Partners with unlock states
-  const strategicPartnersWithStatus: SectionedTabData = {
-    sections: unlockContent.strategicPartners.length > 0 ? [
-      {
-        id: 'general',
-        title: 'General',
-        items: unlockContent.strategicPartners.map(item => ({
-          id: item.itemId,
-          title: item.name,
-          subtitle: item.subtitle,
-          description: item.desc,
-          status: unlocks.unlockedStrategicPartners.includes(item.itemId) ? 'active' as const : 'locked' as const
-        }))
+    // Group items by category
+    const categoryGroups = items.reduce((acc, item) => {
+      const category = item.category || 'General';
+      if (!acc[category]) {
+        acc[category] = [];
       }
-    ] : []
-  };
+      acc[category].push(item);
+      return acc;
+    }, {} as Record<string, T[]>);
 
-  // Merge Partner Relations with unlock states
-  const partnerRelationsWithStatus: SectionedTabData = {
-    sections: unlockContent.partnerRelations.length > 0 ? [
-      {
-        id: 'general',
-        title: 'General',
-        items: unlockContent.partnerRelations.map(item => ({
-          id: item.itemId,
-          title: item.name,
-          subtitle: item.subtitle,
-          description: item.desc,
-          status: unlocks.unlockedPartnerRelations.includes(item.itemId) ? 'active' as const : 'locked' as const
-        }))
-      }
-    ] : []
-  };
+    // Convert to sections
+    const sections = Object.entries(categoryGroups).map(([title, categoryItems]) => ({
+      id: title.toLowerCase().replace(/\s+/g, '-'),
+      title,
+      items: categoryItems.map(item => ({
+        id: item.itemId,
+        title: item.name,
+        subtitle: item.subtitle,
+        description: item.desc,
+        status: unlockedIds.includes(item.itemId) ? 'active' as const : 'locked' as const
+      }))
+    }));
 
-  // Merge Services with unlock states
-  const servicesWithStatus: SectionedTabData = {
-    sections: unlockContent.services.length > 0 ? [
-      {
-        id: 'general',
-        title: 'General',
-        items: unlockContent.services.map(item => ({
-          id: item.itemId,
-          title: item.name,
-          subtitle: item.subtitle,
-          description: item.desc,
-          status: unlocks.unlockedServices.includes(item.itemId) ? 'active' as const : 'locked' as const
-        }))
-      }
-    ] : []
-  };
+    return { sections };
+  }
+
+  // Merge Marketing items with unlock states - group by category
+  const marketingWithStatus = groupItemsByCategoryForUnlocks(unlockContent.marketing, unlocks.unlockedMarketing);
+
+  // Merge Strategic Partners with unlock states - group by category
+  const strategicPartnersWithStatus = groupItemsByCategoryForUnlocks(unlockContent.strategicPartners, unlocks.unlockedStrategicPartners);
+
+  // Merge Partner Relations with unlock states - group by category
+  const partnerRelationsWithStatus = groupItemsByCategoryForUnlocks(unlockContent.partnerRelations, unlocks.unlockedPartnerRelations);
+
+  // Merge Services with unlock states - group by category
+  const servicesWithStatus = groupItemsByCategoryForUnlocks(unlockContent.services, unlocks.unlockedServices);
 
   return {
     bmps: bmpsWithStatus,
@@ -215,44 +204,35 @@ export function clearCache() {
 }
 
 /**
- * Get status from progress - maps progress status to card status
+ * Get status from activation - maps activation status to card status
  * 'completed' -> active card (ready to use, shows gradient button)
  * 'in-progress' -> ready card (ready to activate)
  * 'pending' -> locked card
  */
-function getStatusFromProgress(progress: PodUnlockProgress | undefined): 'active' | 'ready' | 'locked' {
-  if (!progress) return 'locked';
-  return progress.status === 'completed' ? 'active' : progress.status === 'in-progress' ? 'ready' : 'locked';
+function getStatusFromActivation(activation: PodActivation | undefined): 'active' | 'ready' | 'locked' {
+  if (!activation) return 'locked';
+  return activation.status === 'completed' ? 'active' : activation.status === 'in-progress' ? 'ready' : 'locked';
 }
 
 /**
- * Merge unlock content with unlock progress (new system)
+ * Merge unlock content with unlock activations (new simplified system)
  */
 export function mergePodDataWithProgress(
   unlockContent: UnlocksByTab,
-  progress: PodUnlockProgress[]
+  activations: PodActivation[]
 ) {
-  console.log('=== DEBUG mergePodDataWithProgress ===');
-  // Log each BMP's _id and itemId separately for debugging
-  unlockContent.bmps.forEach((b, i) => {
-    console.log(`BMP[${i}]: _id="${b._id}", itemId="${b.itemId}", name="${b.name}"`);
-  });
-  console.log('progress:', JSON.stringify(progress.map(p => ({ unlockId: p.unlockId, status: p.status }))));
+  // Create a map of unlockId -> activation
+  const activationMap = new Map<string, PodActivation>();
+  activations.forEach(a => activationMap.set(a.unlockId, a));
 
-  // Create a map of unlockId -> progress
-  const progressMap = new Map<string, PodUnlockProgress>();
-  progress.forEach(p => progressMap.set(p.unlockId, p));
-  console.log('progressMap keys:', Array.from(progressMap.keys()));
-
-  // Merge BMPs with progress status - match by _id first, fallback to itemId
+  // Merge BMPs with activation status - match by _id first, fallback to itemId
   const bmpsWithStatus: BMP[] = unlockContent.bmps.map((item) => {
-    // Try to find progress by _id first (most reliable), then by itemId
-    let itemProgress = progressMap.get(item._id);
-    if (!itemProgress) {
-      itemProgress = progressMap.get(item.itemId);
+    // Try to find activation by _id first (most reliable), then by itemId
+    let itemActivation = activationMap.get(item._id);
+    if (!itemActivation) {
+      itemActivation = activationMap.get(item.itemId);
     }
-    const status = item.itemId === 'kickoff-caarya' ? 'active' as const : getStatusFromProgress(itemProgress);
-    console.log(`BMP ${item.name} (itemId: "${item.itemId}", _id: "${item._id}"): progress=${itemProgress?.status || 'none'} -> cardStatus=${status}`);
+    const status = item.itemId === 'kickoff-caarya' ? 'active' as const : getStatusFromActivation(itemActivation);
     return {
       id: item._id,
       title: item.name,
@@ -263,7 +243,7 @@ export function mergePodDataWithProgress(
     };
   });
 
-  // Merge Culture items with progress status
+  // Merge Culture items with activation status
   const cultureWithStatus: CultureData = {
     sections: unlockContent.culture.map(item => item.category || 'General').reduce((acc, category) => {
       if (!acc.find(s => s.title === category)) {
@@ -279,112 +259,73 @@ export function mergePodDataWithProgress(
       items: unlockContent.culture
         .filter(item => (item.category || 'General') === section.title)
         .map(item => {
-          let itemProgress = progressMap.get(item._id);
-          if (!itemProgress) {
-            itemProgress = progressMap.get(item.itemId);
+          let itemActivation = activationMap.get(item._id);
+          if (!itemActivation) {
+            itemActivation = activationMap.get(item.itemId);
           }
           return {
             id: item._id,
             title: item.name,
             subtitle: item.subtitle,
             description: item.desc,
-            status: getStatusFromProgress(itemProgress)
+            status: getStatusFromActivation(itemActivation)
           };
         })
     }))
   };
 
-  // Merge Marketing items with progress status
-  const marketingWithStatus: SectionedTabData = {
-    sections: unlockContent.marketing.length > 0 ? [
-      {
-        id: 'general',
-        title: 'General',
-        items: unlockContent.marketing.map(item => {
-          let itemProgress = progressMap.get(item._id);
-          if (!itemProgress) {
-            itemProgress = progressMap.get(item.itemId);
-          }
-          return {
-            id: item._id,
-            title: item.name,
-            subtitle: item.subtitle,
-            description: item.desc,
-            status: getStatusFromProgress(itemProgress)
-          };
-        })
-      }
-    ] : []
-  };
+  /**
+   * Helper to group items by category into sections (like culture does)
+   */
+  function groupItemsByCategory<T extends { _id: string; itemId: string; name: string; subtitle?: string; desc: string; category?: string }>(
+    items: T[],
+    activationMap: Map<string, PodActivation>
+  ): SectionedTabData {
+    if (items.length === 0) return { sections: [] };
 
-  // Merge Strategic Partners with progress status
-  const strategicPartnersWithStatus: SectionedTabData = {
-    sections: unlockContent.strategicPartners.length > 0 ? [
-      {
-        id: 'general',
-        title: 'General',
-        items: unlockContent.strategicPartners.map(item => {
-          let itemProgress = progressMap.get(item._id);
-          if (!itemProgress) {
-            itemProgress = progressMap.get(item.itemId);
-          }
-          return {
-            id: item._id,
-            title: item.name,
-            subtitle: item.subtitle,
-            description: item.desc,
-            status: getStatusFromProgress(itemProgress)
-          };
-        })
+    // Group items by category
+    const categoryGroups = items.reduce((acc, item) => {
+      const category = item.category || 'General';
+      if (!acc[category]) {
+        acc[category] = [];
       }
-    ] : []
-  };
+      acc[category].push(item);
+      return acc;
+    }, {} as Record<string, T[]>);
 
-  // Merge Partner Relations with progress status
-  const partnerRelationsWithStatus: SectionedTabData = {
-    sections: unlockContent.partnerRelations.length > 0 ? [
-      {
-        id: 'general',
-        title: 'General',
-        items: unlockContent.partnerRelations.map(item => {
-          let itemProgress = progressMap.get(item._id);
-          if (!itemProgress) {
-            itemProgress = progressMap.get(item.itemId);
-          }
-          return {
-            id: item._id,
-            title: item.name,
-            subtitle: item.subtitle,
-            description: item.desc,
-            status: getStatusFromProgress(itemProgress)
-          };
-        })
-      }
-    ] : []
-  };
+    // Convert to sections
+    const sections = Object.entries(categoryGroups).map(([title, categoryItems]) => ({
+      id: title.toLowerCase().replace(/\s+/g, '-'),
+      title,
+      items: categoryItems.map(item => {
+        let itemActivation = activationMap.get(item._id);
+        if (!itemActivation) {
+          itemActivation = activationMap.get(item.itemId);
+        }
+        return {
+          id: item._id,
+          title: item.name,
+          subtitle: item.subtitle,
+          description: item.desc,
+          status: getStatusFromActivation(itemActivation)
+        };
+      })
+    }));
 
-  // Merge Services with progress status
-  const servicesWithStatus: SectionedTabData = {
-    sections: unlockContent.services.length > 0 ? [
-      {
-        id: 'general',
-        title: 'General',
-        items: unlockContent.services.map(item => {
-          let itemProgress = progressMap.get(item._id);
-          if (!itemProgress) {
-            itemProgress = progressMap.get(item.itemId);
-          }
-          return {
-            id: item._id,
-            title: item.name,
-            subtitle: item.subtitle,
-            description: item.desc,
-            status: getStatusFromProgress(itemProgress)
-          };
-        })
-      }
-    ] : []
-  };
+    return { sections };
+  }
+
+  // Merge Marketing items with activation status - group by category
+  const marketingWithStatus = groupItemsByCategory(unlockContent.marketing, activationMap);
+
+  // Merge Strategic Partners with activation status - group by category
+  const strategicPartnersWithStatus = groupItemsByCategory(unlockContent.strategicPartners, activationMap);
+
+  // Merge Partner Relations with activation status - group by category
+  const partnerRelationsWithStatus = groupItemsByCategory(unlockContent.partnerRelations, activationMap);
+
+  // Merge Services with activation status - group by category
+  const servicesWithStatus = groupItemsByCategory(unlockContent.services, activationMap);
 
   return {
     bmps: bmpsWithStatus,

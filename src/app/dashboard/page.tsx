@@ -14,6 +14,7 @@ import { fetchPods } from '@/lib/api';
 import { Pod, Crew } from '@/lib/types';
 import { createSlug } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { usePodAccess } from '@/hooks/usePodAccess';
 
 const crewAvatars: Record<string, StaticImageData> = {
     YOSHI: yoshi,
@@ -50,6 +51,7 @@ function groupPodsByCrew(pods: Pod[]): Crew[] {
 
 export default function DashboardPage() {
     const { user } = useAuth();
+    const { canAccessAllPods, userCollege } = usePodAccess();
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -119,7 +121,7 @@ export default function DashboardPage() {
                             placeholder="Search for a pod"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full px-4 py-3 pl-12 bg-neutral-50 rounded-full outline outline-1 outline-offset-[-1px] outline-stone-200 focus:outline-indigo-500 text-sm font-normal font-['Satoshi'] leading-tight tracking-tight transition-all"
+                            className="w-full px-4 py-3 pl-12 bg-neutral-50 rounded-full focus:outline-indigo-500 text-sm font-normal font-['Satoshi'] leading-tight tracking-tight transition-all"
                         />
                         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-stone-400" />
                     </div>
@@ -127,7 +129,7 @@ export default function DashboardPage() {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-                            className="pl-2.5 pr-8 py-1.5 bg-white rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] border border-zinc-100 text-zinc-800 text-xs font-bold font-['Satoshi'] capitalize leading-none tracking-wide appearance-none cursor-pointer"
+                            className="pl-2.5 pr-8 py-1.5 bg-white rounded-md border border-zinc-100 text-zinc-800 text-xs font-bold font-['Satoshi'] capitalize leading-none tracking-wide appearance-none cursor-pointer"
                         >
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
@@ -136,7 +138,7 @@ export default function DashboardPage() {
                         <select
                             value={stageFilter}
                             onChange={(e) => setStageFilter(e.target.value)}
-                            className="pl-2.5 pr-8 py-1.5 bg-white rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] border border-zinc-100 text-zinc-800 text-xs font-bold font-['Satoshi'] capitalize leading-none tracking-wide appearance-none cursor-pointer"
+                            className="pl-2.5 pr-8 py-1.5 bg-white rounded-md border border-zinc-100 text-zinc-800 text-xs font-bold font-['Satoshi'] capitalize leading-none tracking-wide appearance-none cursor-pointer"
                         >
                             <option value="all">All Stages</option>
                             <option value="Stage 1">Stage 1</option>
@@ -146,7 +148,7 @@ export default function DashboardPage() {
                         <select
                             value={memberFilter}
                             onChange={(e) => setMemberFilter(e.target.value)}
-                            className="pl-2.5 pr-8 py-1.5 bg-white rounded-md shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] border border-zinc-100 text-zinc-800 text-xs font-bold font-['Satoshi'] capitalize leading-none tracking-wide appearance-none cursor-pointer"
+                            className="pl-2.5 pr-8 py-1.5 bg-white rounded-md border border-zinc-100 text-zinc-800 text-xs font-bold font-['Satoshi'] capitalize leading-none tracking-wide appearance-none cursor-pointer"
                         >
                             <option value="all">All Members</option>
                             <option value="30+">30+ Members</option>
@@ -171,8 +173,17 @@ export default function DashboardPage() {
                     </div>
                 ) : filteredCrews.length === 0 ? (
                     <div className="w-full text-center py-12">
-                        <div className="text-gray-500 text-lg">No pods found matching your search criteria</div>
-                        <p className="text-gray-400 text-sm mt-2">Try adjusting your filters or search term</p>
+                        {!canAccessAllPods && pods.length === 0 ? (
+                            <>
+                                <div className="text-gray-500 text-lg">You are not a member of any pod yet</div>
+                                <p className="text-gray-400 text-sm mt-2">Contact your lead for assignment</p>
+                            </>
+                        ) : (
+                            <>
+                                <div className="text-gray-500 text-lg">No pods found matching your search criteria</div>
+                                <p className="text-gray-400 text-sm mt-2">Try adjusting your filters or search term</p>
+                            </>
+                        )}
                     </div>
                 ) : (
                     filteredCrews.map((crew) => (
@@ -185,8 +196,8 @@ export default function DashboardPage() {
                                     </div>
                                     <span className="text-sm text-gray-500">({crew.pods.length} pods)</span>
                                 </div>
-                                <div className="flex-1 h-0.5 bg-zinc-100 rounded-[112px]" />
-                                <div className="p-1 bg-zinc-100 rounded-full flex justify-center items-center gap-2">
+                                <div className="flex-1" />
+                                <div className="p-1 bg-zinc-100 border-none flex justify-center items-center gap-2">
                                     <ChevronDown className="w-4 h-4 text-stone-500" />
                                 </div>
                             </div>
@@ -195,10 +206,10 @@ export default function DashboardPage() {
                                     <div
                                         key={pod.id}
                                         onClick={() => handlePodClick(pod)}
-                                        className={`p-3 rounded-2xl shadow-md flex justify-start items-center gap-3 cursor-pointer hover:shadow-lg transition-shadow ${
+                                        className={`p-3 rounded-2xl flex justify-start items-center gap-3 cursor-pointer transition-colors ${
                                             pod.image
-                                                ? 'bg-white border-b-2 border-white'
-                                                : 'bg-neutral-50 outline outline-1 outline-offset-[-1px] outline-stone-200'
+                                                ? 'bg-white'
+                                                : 'bg-neutral-50'
                                         }`}
                                     >
                                         {pod.image ? (

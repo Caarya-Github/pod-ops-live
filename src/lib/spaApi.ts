@@ -36,6 +36,67 @@ export interface WorkReportSummary {
   users: WorkReportUser[];
 }
 
+// DSR Details for View DSR Modal
+export interface DsrSubtask {
+  description: string;
+  duration: string;
+}
+
+export interface DsrWorkItem {
+  id: string;
+  title: string;
+  subtasks: DsrSubtask[];
+  duration: string;
+}
+
+export interface DsrSupportItem {
+  type: string;
+  description: string;
+}
+
+export interface DsrAccountabilityItem {
+  task: string;
+  completed: boolean;
+  description?: string;
+}
+
+export interface DsrVisionSyncItem {
+  task: string;
+}
+
+export interface DsrDetails {
+  memberName: string;
+  memberAvatar?: string;
+  date: string;
+  responsibilities: {
+    workDone: DsrWorkItem[];
+    totalTime: string;
+    challenges: string;
+    supportAvailed: DsrSupportItem[];
+  };
+  accountability: DsrAccountabilityItem[];
+  visionSync: DsrVisionSyncItem[];
+}
+
+// Weekly Work Report Types
+export interface WeeklyMemberProgress {
+  userId: string;
+  name: string;
+  avatar?: string;
+  assignedQuests: number;
+  workExTarget: number;
+  workExCompleted: number;
+  progress: number;
+}
+
+export interface WeeklyWorkReport {
+  weekStart: string;
+  weekEnd: string;
+  goalsCompleted: number;
+  totalPodProductivity: number;
+  members: WeeklyMemberProgress[];
+}
+
 // Helper function to get auth token
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -61,6 +122,25 @@ async function apiRequest<T>(
   });
 
   const data = await response.json();
+
+  // Check for authentication errors and redirect to login
+  if (response.status === 401) {
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      // Check if already redirecting to prevent loop
+      try {
+        if (!(window as any).__isRedirecting) {
+          (window as any).__isRedirecting = true;
+          localStorage.removeItem('token');
+          localStorage.removeItem('authToken');
+          document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+          window.location.href = '/login';
+        }
+      } catch (e) {
+        window.location.href = '/login';
+      }
+    }
+    throw new Error(data.message || 'Authentication failed');
+  }
 
   if (!response.ok) {
     throw new Error(data.message || 'API request failed');
@@ -213,5 +293,48 @@ export const workReportApi = {
   // Get today's work report summary
   async getTodaysWorkReport(): Promise<WorkReportSummary> {
     return this.getWorkReportSummary();
+  },
+
+  // Get DSR details for a specific user on a specific date
+  async getDsrDetails(userId: string, date: string): Promise<DsrDetails | null> {
+    try {
+      const result = await apiRequest<any>(
+        `/admin/dsr-analytics/user/${userId}/date/${date}`
+      );
+      if (!result.data) return null;
+
+      const dsr = result.data;
+      // Transform DSR data to DsrDetails format
+      return {
+        memberName: dsr.userName || 'Unknown',
+        memberAvatar: dsr.userAvatar,
+        date: date,
+        responsibilities: {
+          workDone: dsr.workItems || [],
+          totalTime: dsr.totalWorkHours || '0h',
+          challenges: dsr.challenges || '',
+          supportAvailed: dsr.supportAvailed || [],
+        },
+        accountability: dsr.accountability || [],
+        visionSync: dsr.visionSync || [],
+      };
+    } catch (error) {
+      console.error('Error fetching DSR details:', error);
+      return null;
+    }
+  },
+
+  // Get weekly work report
+  async getWeeklyWorkReport(date?: string): Promise<WeeklyWorkReport | null> {
+    try {
+      const params = date ? `?date=${date}` : '';
+      const result = await apiRequest<WeeklyWorkReport>(
+        `/admin/dsr-analytics/work-report/weekly${params}`
+      );
+      return result.data || null;
+    } catch (error) {
+      console.error('Error fetching weekly work report:', error);
+      return null;
+    }
   },
 };

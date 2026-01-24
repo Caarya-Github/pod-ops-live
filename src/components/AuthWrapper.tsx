@@ -26,13 +26,19 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     const isLoginPage = normalizedPathname === '/login';
     const isRootPage = normalizedPathname === '/';
 
+    // Get token to check if we have a valid custom token
+    const token = localStorage.getItem('token');
+
     if (user) {
       // Authenticated user redirections
-      if (isLoginPage || isRootPage) {
+      // Only redirect to dashboard if we have a valid token
+      // On login page, let the login flow handle the redirect after OTP verification
+      if ((isLoginPage || isRootPage) && token) {
         router.push('/dashboard');
       }
     } else {
       // Unauthenticated user redirections
+      // On login page, don't redirect - let user log in
       if (!isLoginPage) {
         router.push('/login');
       }

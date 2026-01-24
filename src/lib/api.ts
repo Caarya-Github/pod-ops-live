@@ -1,15 +1,56 @@
-import { ApiResponse, ApiPod, Pod, PodDetailsResponse, CollegeResponse, UnlocksByTab, PodUnlockProgress, Stage, Unlock, Asset } from './types';
+import { ApiResponse, ApiPod, Pod, PodDetailsResponse, CollegeResponse, UnlocksByTab, PodUnlockProgressResponse, PodActivation, PodAssetStatus, Stage, Unlock, Asset } from './types';
 import { loadUnlockContent, mergePodDataWithUnlocks, mergePodDataWithProgress } from './dataLoader';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export interface PodUnlocksResponse {
-  unlockedBmps: string[];
-  unlockedCulture: string[];
-  unlockedMarketing: string[];
-  unlockedStrategicPartners: string[];
-  unlockedPartnerRelations: string[];
-  unlockedServices: string[];
+// Flag to prevent multiple redirects in quick succession
+let isRedirecting = false;
+
+// Helper function to get auth token from localStorage
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('token');
+}
+
+// Helper for authenticated fetch calls
+async function authenticatedFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const token = getAuthToken();
+  const headers: HeadersInit = {
+    ...(options?.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  // Check for authentication errors and redirect to login
+  if (response.status === 401) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData.message || '';
+
+    // Check for specific "Invalid token" message or general auth failure
+    if (errorMessage === 'Invalid token' || errorMessage === 'Authentication failed' || errorMessage === 'No token provided') {
+      // Clear local storage and redirect to login
+      if (typeof window !== 'undefined' && !isRedirecting) {
+        // Avoid redirect loop by checking if already on login page
+        if (!window.location.pathname.includes('/login')) {
+          isRedirecting = true;
+          localStorage.removeItem('token');
+          document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+          window.location.href = '/login';
+        }
+      }
+    }
+    throw new Error(errorMessage || 'Authentication failed');
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
 }
 
 /**
@@ -17,7 +58,23 @@ export interface PodUnlocksResponse {
  */
 export async function fetchUnlocksByTab(): Promise<UnlocksByTab> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/unlocks/by-tab`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/admin/unlocks/by-tab`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -38,13 +95,7 @@ export async function fetchUnlocksByTab(): Promise<UnlocksByTab> {
 
 export async function fetchPods(): Promise<Pod[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/pods`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: ApiResponse<ApiPod[]> = await response.json();
+    const data = await authenticatedFetch<ApiResponse<ApiPod[]>>(`${API_BASE_URL}/pods`);
 
     if (!data.success || !data.data) {
       throw new Error('Invalid API response format');
@@ -69,7 +120,23 @@ export async function fetchPods(): Promise<Pod[]> {
 export async function fetchPodDetails(podId: string): Promise<PodDetailsResponse | null> {
   try {
     // Fetch pod info from API
-    const response = await fetch(`${API_BASE_URL}/pods/${podId}?includeDetails=true`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/pods/${podId}?includeDetails=true`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      return null;
+    }
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -88,7 +155,7 @@ export async function fetchPodDetails(podId: string): Promise<PodDetailsResponse
     const unlockContent = await loadUnlockContent();
 
     // Try to get unlock progress from new endpoint
-    let progress: PodUnlockProgress[] = [];
+    let progress: PodUnlockProgressResponse | null = null;
     try {
       progress = await fetchUnlockProgress(podId);
       console.log('Fetched unlock progress:', progress);
@@ -99,8 +166,8 @@ export async function fetchPodDetails(podId: string): Promise<PodDetailsResponse
     // If we have progress data, use the new merge function
     // Otherwise fall back to the old unlock system
     let mergedData;
-    if (progress.length > 0) {
-      mergedData = mergePodDataWithProgress(unlockContent, progress);
+    if (progress && progress.activations.length > 0) {
+      mergedData = mergePodDataWithProgress(unlockContent, progress.activations);
     } else {
       // Fall back to old unlock system
       const unlocks = data.data.unlocks || {
@@ -136,113 +203,36 @@ export async function fetchPodDetails(podId: string): Promise<PodDetailsResponse
 }
 
 /**
- * Fetch unlock states for a specific pod
+ * Fetch unlock progress for a specific pod (new simplified system)
  */
-export async function fetchPodUnlocks(podId: string): Promise<PodUnlocksResponse | null> {
+export async function fetchUnlockProgress(podId: string): Promise<PodUnlockProgressResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlocks`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlock-progress`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
 
     if (!response.ok) {
       if (response.status === 404) {
-        return null;
+        return { activations: [], assetStatuses: [] };
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data: ApiResponse<PodUnlocksResponse> = await response.json();
-
-    if (!data.success || !data.data) {
-      throw new Error('Invalid API response format');
-    }
-
-    return data.data;
-  } catch (error) {
-    console.error('Error fetching pod unlocks:', error);
-    throw error;
-  }
-}
-
-/**
- * Unlock specific items in a pod
- */
-export async function unlockPodItems(
-  podId: string,
-  items: Array<{ tabName: string; itemId: string; status: string }>
-): Promise<PodUnlocksResponse | null> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlock`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ items }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: ApiResponse<PodUnlocksResponse> = await response.json();
-
-    if (!data.success || !data.data) {
-      throw new Error('Invalid API response format');
-    }
-
-    return data.data;
-  } catch (error) {
-    console.error('Error unlocking pod items:', error);
-    throw error;
-  }
-}
-
-/**
- * Lock specific items in a pod
- */
-export async function lockPodItems(
-  podId: string,
-  items: Array<{ tabName: string; itemId: string }>
-): Promise<PodUnlocksResponse | null> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/pods/${podId}/lock`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ items }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: ApiResponse<PodUnlocksResponse> = await response.json();
-
-    if (!data.success || !data.data) {
-      throw new Error('Invalid API response format');
-    }
-
-    return data.data;
-  } catch (error) {
-    console.error('Error locking pod items:', error);
-    throw error;
-  }
-}
-
-/**
- * Fetch unlock progress for a specific pod (new system)
- */
-export async function fetchUnlockProgress(podId: string): Promise<PodUnlockProgress[]> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlock-progress`);
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return [];
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: ApiResponse<PodUnlockProgress[]> = await response.json();
+    const data: ApiResponse<PodUnlockProgressResponse> = await response.json();
 
     if (!data.success || !data.data) {
       throw new Error('Invalid API response format');
@@ -256,23 +246,36 @@ export async function fetchUnlockProgress(podId: string): Promise<PodUnlockProgr
 }
 
 /**
- * Toggle unlock status for a specific unlock (new system)
+ * Start activation for an unlock (pending -> in-progress)
  */
-export async function toggleUnlockStatus(podId: string, unlockId: string): Promise<PodUnlockProgress> {
+export async function startUnlockActivation(podId: string, unlockId: string): Promise<PodActivation> {
   try {
-    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlocks/${unlockId}/toggle`, {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlocks/${unlockId}/start-activation`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({}),
     });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data: ApiResponse<PodUnlockProgress> = await response.json();
+    const data: ApiResponse<PodActivation> = await response.json();
 
     if (!data.success || !data.data) {
       throw new Error('Invalid API response format');
@@ -280,7 +283,50 @@ export async function toggleUnlockStatus(podId: string, unlockId: string): Promi
 
     return data.data;
   } catch (error) {
-    console.error('Error toggling unlock status:', error);
+    console.error('Error starting unlock activation:', error);
+    throw error;
+  }
+}
+
+/**
+ * Toggle activation status for a specific unlock
+ */
+export async function toggleActivationStatus(podId: string, unlockId: string): Promise<PodActivation> {
+  try {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlocks/${unlockId}/toggle`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({}),
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: ApiResponse<PodActivation> = await response.json();
+
+    if (!data.success || !data.data) {
+      throw new Error('Invalid API response format');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error toggling activation status:', error);
     throw error;
   }
 }
@@ -290,7 +336,23 @@ export async function toggleUnlockStatus(podId: string, unlockId: string): Promi
  */
 export async function fetchStages(): Promise<Stage[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/stages`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/admin/stages`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -314,8 +376,24 @@ export async function fetchStages(): Promise<Stage[]> {
  */
 export async function fetchUnlocks(departmentId?: string): Promise<Unlock[]> {
   try {
+    const token = getAuthToken();
     const query = departmentId ? `?departmentId=${departmentId}` : '';
-    const response = await fetch(`${API_BASE_URL}/admin/unlocks${query}`);
+    const response = await fetch(`${API_BASE_URL}/admin/unlocks${query}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -339,7 +417,23 @@ export async function fetchUnlocks(departmentId?: string): Promise<Unlock[]> {
  */
 export async function fetchUnlockAssets(unlockId: string): Promise<Asset[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/assets/unlock/${unlockId}`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/admin/assets/unlock/${unlockId}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -362,23 +456,41 @@ export async function fetchUnlockAssets(unlockId: string): Promise<Asset[]> {
 }
 
 /**
- * Start activation for an unlock (pending -> in-progress)
+ * Fetch assets for an unlock with their completion status
  */
-export async function startUnlockActivation(podId: string, unlockId: string): Promise<PodUnlockProgress> {
+export async function fetchUnlockAssetsWithStatus(podId: string, unlockId: string): Promise<PodAssetStatus[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlocks/${unlockId}/start-activation`, {
-      method: 'PATCH',
+    console.log('[API] fetchUnlockAssetsWithStatus:', { podId, unlockId });
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/pods/${podId}/unlocks/${unlockId}/assets`, {
       headers: {
-        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({}),
     });
 
+    console.log('[API] Response status:', response.status);
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
+
     if (!response.ok) {
+      if (response.status === 404) {
+        console.log('[API] 404 - No assets found');
+        return [];
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data: ApiResponse<PodUnlockProgress> = await response.json();
+    const data: ApiResponse<PodAssetStatus[]> = await response.json();
+    console.log('[API] Response data:', data);
 
     if (!data.success || !data.data) {
       throw new Error('Invalid API response format');
@@ -386,7 +498,93 @@ export async function startUnlockActivation(podId: string, unlockId: string): Pr
 
     return data.data;
   } catch (error) {
-    console.error('Error starting unlock activation:', error);
+    console.error('[API] Error fetching unlock assets with status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Toggle asset completion status
+ */
+export async function toggleAssetCompletion(podId: string, assetId: string): Promise<PodAssetStatus> {
+  try {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/pods/${podId}/assets/${assetId}/toggle`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({}),
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: ApiResponse<PodAssetStatus> = await response.json();
+
+    if (!data.success || !data.data) {
+      throw new Error('Invalid API response format');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error toggling asset completion:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update asset comment
+ */
+export async function updateAssetComment(podId: string, assetId: string, comment: string): Promise<PodAssetStatus> {
+  try {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/pods/${podId}/assets/${assetId}/comment`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ comment }),
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: ApiResponse<PodAssetStatus> = await response.json();
+
+    if (!data.success || !data.data) {
+      throw new Error('Invalid API response format');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error updating asset comment:', error);
     throw error;
   }
 }
@@ -396,7 +594,23 @@ export async function startUnlockActivation(podId: string, unlockId: string): Pr
  */
 export async function fetchAllAssets(): Promise<Asset[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/assets`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/admin/assets`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -416,4 +630,180 @@ export async function fetchAllAssets(): Promise<Asset[]> {
     console.error('Error fetching all assets:', error);
     throw error;
   }
+}
+
+// Types for availability calendar
+export interface MemberAvailability {
+  userId: string;
+  name: string;
+  dates: Array<{
+    date: string;
+    available: boolean;
+    hours: number;
+  }>;
+}
+
+export interface AvailabilityCalendarData {
+  startDate: string;
+  endDate: string;
+  members: MemberAvailability[];
+}
+
+export interface TeamMember {
+  _id: string;
+  name: string;
+  goals: number;
+  role: {
+    _id: string;
+    name: string;
+    description?: string;
+  } | null;
+}
+
+/**
+ * Fetch member availability for a date range
+ */
+export async function fetchMembersAvailability(
+  userIds: string[],
+  startDate: string,
+  endDate: string
+): Promise<MemberAvailability[]> {
+  try {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/user/work-preferences/members-availability`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ userIds, startDate, endDate }),
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: ApiResponse<MemberAvailability[]> = await response.json();
+
+    if (!data.success || !data.data) {
+      throw new Error('Invalid API response format');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error fetching members availability:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all members
+ */
+export async function fetchAllMembers(): Promise<TeamMember[]> {
+  try {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/admin/members`, {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: ApiResponse<TeamMember[]> = await response.json();
+
+    if (!data.success || !data.data) {
+      throw new Error('Invalid API response format');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error fetching members:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch members for a specific pod using the admin members endpoint with college filter
+ */
+export async function fetchPodMembers(podId: string): Promise<TeamMember[]> {
+  try {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/admin/members?college=${podId}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    // Check for authentication errors and redirect to login
+    if (response.status === 401) {
+      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
+        isRedirecting = true;
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        window.location.href = '/login';
+      }
+      throw new Error('Authentication failed');
+    }
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return [];
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: ApiResponse<TeamMember[]> = await response.json();
+
+    if (!data.success || !data.data) {
+      throw new Error('Invalid API response format');
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Error fetching pod members:', error);
+    throw error;
+  }
+}
+
+// Keep old function signatures for backwards compatibility during transition
+// These will be removed after full migration
+export async function fetchPodUnlocks(): Promise<null> {
+  return null;
+}
+
+export async function unlockPodItems(): Promise<null> {
+  return null;
+}
+
+export async function lockPodItems(): Promise<null> {
+  return null;
+}
+
+export async function toggleUnlockStatus(): Promise<PodActivation> {
+  throw new Error('Use toggleActivationStatus instead');
 }

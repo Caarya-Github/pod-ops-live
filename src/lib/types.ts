@@ -1,3 +1,35 @@
+// User Profile Types
+export interface UserProfile {
+  _id: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  college: {
+    _id: string;
+    name: string;
+    crew: string;
+    isPod: boolean;
+  } | null;
+  role: {
+    _id: string;
+    name: string;
+    description?: string;
+  } | null;
+  rank: {
+    _id: string;
+    name: string;
+  } | null;
+  isActive: boolean;
+  hasOnboarded: boolean;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  data: {
+    user: UserProfile;
+  };
+}
+
 export interface ApiPod {
   _id: string;
   name: string;
@@ -21,7 +53,7 @@ export interface Pod {
   location: string;
   stage: string;
   members: number;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   crew: string;
   image?: string;
 }
@@ -40,7 +72,13 @@ export interface UnlockItem {
   subtitle: string;
   desc: string;
   category: string;
-  tabName: 'bmps' | 'culture' | 'marketing' | 'strategicPartners' | 'partnerRelations' | 'services';
+  tabName:
+    | "bmps"
+    | "culture"
+    | "marketing"
+    | "strategicPartners"
+    | "partnerRelations"
+    | "services";
   itemId: string;
   department_id: string;
 }
@@ -60,8 +98,8 @@ export interface BMP {
   title: string;
   subtitle: string;
   description?: string;
-  status: 'active' | 'ready' | 'locked';
-  category: 'leadership' | 'execution' | 'visibility';
+  status: "active" | "ready" | "locked";
+  category: "leadership" | "execution" | "visibility";
 }
 
 export interface CultureItem {
@@ -69,7 +107,7 @@ export interface CultureItem {
   title: string;
   subtitle?: string;
   description: string;
-  status: 'active' | 'ready' | 'locked';
+  status: "active" | "ready" | "locked";
 }
 
 export interface CultureSection {
@@ -87,7 +125,7 @@ export interface SimpleItem {
   title: string;
   subtitle?: string;
   description: string;
-  status: 'active' | 'ready' | 'locked';
+  status: "active" | "ready" | "locked";
 }
 
 export interface SimpleTabData {
@@ -144,7 +182,32 @@ export interface CollegeResponse {
   };
 }
 
-// Unlock progress types
+// Unlock progress types - New simplified schema
+export interface PodActivation {
+  unlockId: string;
+  status: "pending" | "in-progress" | "completed";
+  startedAt: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PodAssetStatus {
+  assetId: string;
+  title: string;
+  completed: boolean;
+  completedAt?: string;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PodUnlockProgressResponse {
+  activations: PodActivation[];
+  assetStatuses: PodAssetStatus[];
+}
+
+// Keep old types for backwards compatibility during transition
 export interface Asset {
   _id: string;
   title: string;
@@ -165,7 +228,7 @@ export interface PodUnlockProgress {
   unlockId: string;
   stageId: string;
   deliverables: Deliverable[];
-  status: 'pending' | 'in-progress' | 'completed';
+  status: "pending" | "in-progress" | "completed";
   progress: number;
   createdAt: string;
   updatedAt: string;

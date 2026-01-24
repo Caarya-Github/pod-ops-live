@@ -16,8 +16,8 @@ function Navbar() {
     };
 
     return (
-        <div className="w-full">
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-3 bg-white shadow-[0px_1px_3px_0px_rgba(0,0,0,0.10)] shadow-[0px_1px_2px_-1px_rgba(0,0,0,0.10)] flex justify-between items-center">
+        <div className="w-full border-b border-gray-200">
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-3 bg-white flex justify-between items-center border-none">
                 <div className="flex justify-start items-center gap-2">
                     <Image src={logo} alt="Logo" width={40} height={40} />
                     <div className="w-32 h-8 relative">
