@@ -25,6 +25,7 @@ import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { clearCache } from "@/lib/dataLoader";
 import { usePodAccess } from "@/hooks/usePodAccess";
+import StrategicPartnersContent from "@/components/spa/StrategicPartnersContent";
 
 type TabType =
   | "Team Directory"
@@ -463,12 +464,11 @@ export default function PodPage() {
           : null;
 
       case "Strategic Partners":
-        return podData?.strategicPartners
-          ? renderSectionedTab(
-              podData.strategicPartners.sections,
-              "Strategic Partners",
-            )
-          : null;
+        return (
+          <div className="w-full">
+            <StrategicPartnersContent />
+          </div>
+        );
 
       case "Partner Relations":
         return podData?.partnerRelations
