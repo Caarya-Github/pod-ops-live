@@ -168,7 +168,7 @@ export const ReadyCard: React.FC<ReadyCardProps> = ({
 
   return (
     <>
-      <div className="w-80 p-4 inline-flex flex-col justify-center items-start gap-6 bg-white">
+      <div className="w-80 p-4 inline-flex flex-col justify-center items-start gap-6 bg-white outline-1 rounded-2xl">
         <div className="self-stretch flex flex-col justify-start items-start">
           <div className="self-stretch justify-start text-zinc-800 text-base font-bold font-['Lato'] leading-[24px] tracking-[0.4px]">
             {title}
@@ -281,7 +281,7 @@ export const ActiveCard: React.FC<ActiveCardProps> = ({
 
   return (
     <>
-      <div className="w-80 p-4 inline-flex flex-col justify-center items-start gap-6 bg-white">
+      <div className="w-80 p-4 inline-flex flex-col justify-center items-start gap-6 bg-white outline-1 rounded-2xl">
         <div
           className={
             isKickoff

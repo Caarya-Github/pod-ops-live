@@ -1,71 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
 }
 
 body {
-  background: #ffffff;
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Aggressive CSS reset to remove any unwanted borders or decorations */
-*,
-*::before,
-*::after {
-  border-width: 0 !important;
-  border-style: none !important;
-  border-color: transparent !important;
-  outline: none !important;
-  text-decoration: none !important;
-  -webkit-text-decoration: none !important;
-}
-
-/* Allow borders on sidebar */
-.sidebar,
-.sidebar * {
-  border-width: unset !important;
-  border-style: unset !important;
-  border-color: unset !important;
-}
-
-/* Remove any default underlines from links */
-a,
-a:hover,
-a:focus {
-  text-decoration: none !important;
-  text-decoration-line: none !important;
-  text-decoration-thickness: 0 !important;
-}
-
-/* Remove any border from form elements */
-input,
-button,
-select,
-textarea {
-  border: none !important;
-  outline: none !important;
-}
-
-/* Remove default hr styling */
-hr {
-  display: none !important;
-  border: none !important;
-  border-width: 0 !important;
+    background: #ffffff;
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
 }

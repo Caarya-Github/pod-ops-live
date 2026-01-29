@@ -323,7 +323,7 @@ export default function PodPage() {
             {title}
           </div>
         </div>
-        <div className="flex-1" />
+        <div className="flex-1 outline-1" />
         <div className="p-1 bg-zinc-100 rounded-full flex justify-center items-center gap-2">
           <ChevronDown className="w-4 h-4 text-stone-500" />
         </div>

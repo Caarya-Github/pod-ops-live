@@ -111,7 +111,10 @@ export default function Sidebar({ pod, activeTab, onTabChange }: SidebarProps) {
   if (!pod) return null;
 
   return (
-    <div className="w-72 min-h-screen bg-white flex flex-col sidebar" style={{ boxShadow: 'inset -2px 0 0 0 #d1d5db' }}>
+    <div
+      className="w-72 min-h-screen bg-white flex flex-col sidebar"
+      style={{ boxShadow: "inset -2px 0 0 0 #d1d5db" }}
+    >
       {/* Back Button */}
       <div className="px-4 py-4 border-none">
         <button
@@ -212,9 +215,7 @@ export default function Sidebar({ pod, activeTab, onTabChange }: SidebarProps) {
                 <button
                   onClick={() => handleTabClick(item.name)}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                    active
-                      ? "bg-[#fff6f5]"
-                      : "hover:bg-zinc-50"
+                    active ? "bg-[#fff6f5]" : "hover:bg-zinc-50"
                   }`}
                 >
                   <svg
@@ -256,9 +257,7 @@ export default function Sidebar({ pod, activeTab, onTabChange }: SidebarProps) {
                           key={subItem.name}
                           onClick={() => onTabChange(subItem.name)}
                           className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                            isSubActive
-                              ? "bg-[#fff6f5]"
-                              : "hover:bg-zinc-50"
+                            isSubActive ? "bg-[#fff6f5]" : "hover:bg-zinc-50"
                           }`}
                         >
                           <span
@@ -280,7 +279,7 @@ export default function Sidebar({ pod, activeTab, onTabChange }: SidebarProps) {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-[#f3f2f2] sidebar">
+      {/*<div className="px-4 py-3 border-t border-[#f3f2f2] sidebar">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 relative rounded-full overflow-hidden bg-zinc-100">
             <Image
@@ -301,7 +300,7 @@ export default function Sidebar({ pod, activeTab, onTabChange }: SidebarProps) {
           </div>
           <ChevronDown className="w-3 h-3 text-stone-400 ml-auto" />
         </div>
-      </div>
+      </div>*/}
     </div>
   );
 }
