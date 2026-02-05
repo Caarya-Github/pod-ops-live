@@ -6,10 +6,43 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 // Flag to prevent multiple redirects in quick succession
 let isRedirecting = false;
 
+// Token error messages that indicate the user needs to re-authenticate
+const TOKEN_ERROR_MESSAGES = [
+  'token has expired',
+  'token expired',
+  'invalid token',
+  'jwt expired',
+  'jwt malformed',
+  'authentication failed',
+  'unauthorized',
+  'no token provided',
+];
+
 // Helper function to get auth token from localStorage
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('token');
+}
+
+// Helper to check if an error indicates token expiry/invalid
+function isTokenError(status: number, errorMessage: string, errorCode?: string): boolean {
+  if (status === 401) return true;
+  if (errorCode === 'TOKEN_EXPIRED') return true;
+
+  const lowerMessage = errorMessage.toLowerCase();
+  return TOKEN_ERROR_MESSAGES.some(msg => lowerMessage.includes(msg));
+}
+
+// Helper to handle token expiration redirect
+function handleTokenExpiration(): void {
+  if (typeof window === 'undefined') return;
+  if (isRedirecting) return;
+  if (window.location.pathname.includes('/login')) return;
+
+  isRedirecting = true;
+  localStorage.removeItem('token');
+  document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+  window.location.href = '/login';
 }
 
 // Helper for authenticated fetch calls
@@ -29,24 +62,30 @@ async function authenticatedFetch<T>(url: string, options?: RequestInit): Promis
   if (response.status === 401) {
     const errorData = await response.json().catch(() => ({}));
     const errorMessage = errorData.message || '';
+    const errorCode = errorData.code || '';
 
-    // Check for specific "Invalid token" message or general auth failure
-    if (errorMessage === 'Invalid token' || errorMessage === 'Authentication failed' || errorMessage === 'No token provided') {
-      // Clear local storage and redirect to login
-      if (typeof window !== 'undefined' && !isRedirecting) {
-        // Avoid redirect loop by checking if already on login page
-        if (!window.location.pathname.includes('/login')) {
-          isRedirecting = true;
-          localStorage.removeItem('token');
-          document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-          window.location.href = '/login';
-        }
-      }
+    // Check for token-related errors
+    if (isTokenError(response.status, errorMessage, errorCode)) {
+      handleTokenExpiration();
     }
     throw new Error(errorMessage || 'Authentication failed');
   }
 
   if (!response.ok) {
+    // Also check error body for non-401 errors that might indicate token issues
+    try {
+      const clonedResponse = response.clone();
+      const errorData = await clonedResponse.json();
+      const errorMessage = errorData.message || errorData.error || '';
+      const errorCode = errorData.code || '';
+
+      if (isTokenError(response.status, errorMessage, errorCode)) {
+        handleTokenExpiration();
+        throw new Error(errorMessage || 'Token expired');
+      }
+    } catch {
+      // If we can't parse the error, continue with original error
+    }
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
@@ -67,12 +106,7 @@ export async function fetchUnlocksByTab(): Promise<UnlocksByTab> {
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -129,12 +163,7 @@ export async function fetchPodDetails(podId: string): Promise<PodDetailsResponse
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       return null;
     }
 
@@ -216,12 +245,7 @@ export async function fetchUnlockProgress(podId: string): Promise<PodUnlockProgr
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -262,12 +286,7 @@ export async function startUnlockActivation(podId: string, unlockId: string): Pr
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -305,12 +324,7 @@ export async function toggleActivationStatus(podId: string, unlockId: string): P
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -345,12 +359,7 @@ export async function fetchStages(): Promise<Stage[]> {
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -386,12 +395,7 @@ export async function fetchUnlocks(departmentId?: string): Promise<Unlock[]> {
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -426,12 +430,7 @@ export async function fetchUnlockAssets(unlockId: string): Promise<Asset[]> {
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -472,12 +471,7 @@ export async function fetchUnlockAssetsWithStatus(podId: string, unlockId: strin
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -520,12 +514,7 @@ export async function toggleAssetCompletion(podId: string, assetId: string): Pro
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -563,12 +552,7 @@ export async function updateAssetComment(podId: string, assetId: string, comment
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -603,12 +587,7 @@ export async function fetchAllAssets(): Promise<Asset[]> {
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -681,12 +660,7 @@ export async function fetchMembersAvailability(
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -721,12 +695,7 @@ export async function fetchAllMembers(): Promise<TeamMember[]> {
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
@@ -761,12 +730,7 @@ export async function fetchPodMembers(podId: string): Promise<TeamMember[]> {
 
     // Check for authentication errors and redirect to login
     if (response.status === 401) {
-      if (typeof window !== 'undefined' && !isRedirecting && !window.location.pathname.includes('/login')) {
-        isRedirecting = true;
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-        window.location.href = '/login';
-      }
+      handleTokenExpiration();
       throw new Error('Authentication failed');
     }
 
