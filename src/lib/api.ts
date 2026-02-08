@@ -1,4 +1,4 @@
-import { ApiResponse, ApiPod, Pod, PodDetailsResponse, CollegeResponse, UnlocksByTab, PodUnlockProgressResponse, PodActivation, PodAssetStatus, Stage, Unlock, Asset } from './types';
+import { ApiResponse, ApiPod, Pod, PodDetailsResponse, CollegeResponse, UnlocksByTab, PodUnlockProgressResponse, PodActivation, PodAssetStatus, Stage, Unlock, Asset, Challenge, CoreProblem, Solution, RootCauseStep } from './types';
 import { loadUnlockContent, mergePodDataWithUnlocks, mergePodDataWithProgress } from './dataLoader';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -770,4 +770,131 @@ export async function lockPodItems(): Promise<null> {
 
 export async function toggleUnlockStatus(): Promise<PodActivation> {
   throw new Error('Use toggleActivationStatus instead');
+}
+
+// ─── Challenge Vault API Functions ───
+
+export async function fetchChallengesByPod(podId: string, filters?: { status?: string; category?: string }): Promise<Challenge[]> {
+  const params = new URLSearchParams();
+  if (filters?.status) params.append('status', filters.status);
+  if (filters?.category) params.append('category', filters.category);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const data = await authenticatedFetch<ApiResponse<Challenge[]>>(`${API_BASE_URL}/admin/challenge-vault/pod/${podId}${query}`);
+  return data.data || [];
+}
+
+export async function createChallenge(body: { title: string; description: string; podId: string; addedBy?: string; category: string; priority?: string }): Promise<Challenge> {
+  const data = await authenticatedFetch<ApiResponse<Challenge>>(`${API_BASE_URL}/admin/challenge-vault`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return data.data!;
+}
+
+export async function updateChallenge(id: string, body: Record<string, unknown>): Promise<Challenge> {
+  const data = await authenticatedFetch<ApiResponse<Challenge>>(`${API_BASE_URL}/admin/challenge-vault/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return data.data!;
+}
+
+export async function deleteChallenge(id: string): Promise<void> {
+  await authenticatedFetch<ApiResponse<void>>(`${API_BASE_URL}/admin/challenge-vault/${id}`, { method: 'DELETE' });
+}
+
+export async function linkChallengeToCoreProblem(challengeId: string, coreProblemId: string): Promise<Challenge> {
+  const data = await authenticatedFetch<ApiResponse<Challenge>>(`${API_BASE_URL}/admin/challenge-vault/${challengeId}/link-core-problem`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ coreProblemId }),
+  });
+  return data.data!;
+}
+
+export async function fetchCoreProblemsByPod(podId: string, filters?: { status?: string }): Promise<CoreProblem[]> {
+  const params = new URLSearchParams();
+  if (filters?.status) params.append('status', filters.status);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const data = await authenticatedFetch<ApiResponse<CoreProblem[]>>(`${API_BASE_URL}/admin/challenge-vault/core-problems/pod/${podId}${query}`);
+  return data.data || [];
+}
+
+export async function createCoreProblem(body: { title: string; description: string; podId: string; challengeId?: string; assignedTo?: string; rootCauseAnalysis?: RootCauseStep[] }): Promise<CoreProblem> {
+  const data = await authenticatedFetch<ApiResponse<CoreProblem>>(`${API_BASE_URL}/admin/challenge-vault/core-problems`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return data.data!;
+}
+
+export async function updateRootCauseAnalysis(id: string, rootCauseAnalysis: RootCauseStep[]): Promise<CoreProblem> {
+  const data = await authenticatedFetch<ApiResponse<CoreProblem>>(`${API_BASE_URL}/admin/challenge-vault/core-problems/${id}/rca`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rootCauseAnalysis }),
+  });
+  return data.data!;
+}
+
+export async function openForPublicSolutions(id: string): Promise<CoreProblem> {
+  const data = await authenticatedFetch<ApiResponse<CoreProblem>>(`${API_BASE_URL}/admin/challenge-vault/core-problems/${id}/open-for-solutions`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  return data.data!;
+}
+
+export async function escalateCoreProblem(id: string, escalatedTo: string, notes: string): Promise<CoreProblem> {
+  const data = await authenticatedFetch<ApiResponse<CoreProblem>>(`${API_BASE_URL}/admin/challenge-vault/core-problems/${id}/escalate`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ escalatedTo, notes }),
+  });
+  return data.data!;
+}
+
+export async function resolveCoreProblem(id: string, solutionId: string, winReflection: string): Promise<CoreProblem> {
+  const data = await authenticatedFetch<ApiResponse<CoreProblem>>(`${API_BASE_URL}/admin/challenge-vault/core-problems/${id}/resolve`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ solutionId, winReflection }),
+  });
+  return data.data!;
+}
+
+export async function recordOutcome(id: string, isSolved: boolean, notes: string): Promise<CoreProblem> {
+  const data = await authenticatedFetch<ApiResponse<CoreProblem>>(`${API_BASE_URL}/admin/challenge-vault/core-problems/${id}/outcome`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isSolved, notes }),
+  });
+  return data.data!;
+}
+
+export async function fetchSolutionsForCoreProblem(coreProblemId: string): Promise<Solution[]> {
+  const data = await authenticatedFetch<ApiResponse<Solution[]>>(`${API_BASE_URL}/admin/challenge-vault/solutions/core-problem/${coreProblemId}`);
+  return data.data || [];
+}
+
+export async function reviewSolution(id: string, status: 'accepted' | 'discarded', notes: string): Promise<Solution> {
+  const data = await authenticatedFetch<ApiResponse<Solution>>(`${API_BASE_URL}/admin/challenge-vault/solutions/${id}/review`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, notes }),
+  });
+  return data.data!;
+}
+
+export async function selectSolution(id: string): Promise<Solution> {
+  const data = await authenticatedFetch<ApiResponse<Solution>>(`${API_BASE_URL}/admin/challenge-vault/solutions/${id}/select`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  return data.data!;
 }

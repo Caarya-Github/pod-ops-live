@@ -257,3 +257,103 @@ export interface Unlock {
 export interface StageWithUnlocks extends Stage {
   unlocksData: Unlock[];
 }
+
+// Challenge Vault Types
+export type ChallengeCategory = 'bmps' | 'culture' | 'marketing' | 'strategicPartners' | 'partnerRelations' | 'services';
+export type ChallengePriority = 'low' | 'medium' | 'high' | 'critical';
+export type ChallengeStatus = 'identified' | 'rca-in-progress' | 'rca-completed' | 'solution-in-progress' | 'resolved' | 'archived';
+export type CoreProblemStatus = 'identified' | 'open-for-solutions' | 'solution-implementing' | 'resolved' | 'escalated';
+export type SolutionStatus = 'submitted' | 'under-review' | 'accepted' | 'discarded' | 'implementing' | 'implemented';
+
+export interface RootCauseStep {
+  level: number;
+  answer: string;
+}
+
+export interface Challenge {
+  _id: string;
+  title: string;
+  description: string;
+  podId: string;
+  addedBy: {
+    _id: string;
+    name: string;
+    email?: string;
+    phoneNumber?: string;
+  } | string;
+  category: ChallengeCategory;
+  priority: ChallengePriority;
+  status: ChallengeStatus;
+  dateIdentified: string;
+  coreProblemId: {
+    _id: string;
+    title: string;
+    status: string;
+  } | string | null;
+  creditsAwarded: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CoreProblem {
+  _id: string;
+  title: string;
+  description: string;
+  podId: string;
+  challenges: Array<{
+    _id: string;
+    title: string;
+    status: string;
+    category?: string;
+    priority?: string;
+  }>;
+  rootCauseAnalysis: RootCauseStep[];
+  status: CoreProblemStatus;
+  assignedTo: {
+    _id: string;
+    name: string;
+    email?: string;
+    phoneNumber?: string;
+  } | null;
+  resolvedBySolutionId: string | null;
+  winReflection: string | null;
+  resolvedAt: string | null;
+  isPublic: boolean;
+  escalatedTo: {
+    _id: string;
+    name: string;
+    email?: string;
+    phoneNumber?: string;
+  } | null;
+  escalationNotes: string;
+  outcomeNotes: string;
+  isSolved: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Solution {
+  _id: string;
+  coreProblemId: string;
+  submittedBy: {
+    _id: string;
+    name: string;
+    email?: string;
+    phoneNumber?: string;
+  } | string;
+  description: string;
+  status: SolutionStatus;
+  isSelected: boolean;
+  reviewedBy: {
+    _id: string;
+    name: string;
+    email?: string;
+  } | null;
+  reviewNotes: string;
+  reviewedAt: string | null;
+  outcome: string;
+  outcomeDate: string | null;
+  creditsAwarded: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

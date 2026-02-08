@@ -26,6 +26,7 @@ import Image from "next/image";
 import { clearCache } from "@/lib/dataLoader";
 import { usePodAccess } from "@/hooks/usePodAccess";
 import StrategicPartnersContent from "@/components/spa/StrategicPartnersContent";
+import ChallengeVaultContent from "@/components/challenge-vault/ChallengeVaultContent";
 
 type TabType =
   | "Team Directory"
@@ -532,13 +533,8 @@ export default function PodPage() {
 
       case "Challenge Vault":
         return (
-          <div className="text-center py-20">
-            <div className="text-zinc-800 text-xl font-bold font-['Lato'] mb-4">
-              Challenge Vault
-            </div>
-            <div className="text-stone-400 text-sm font-normal font-['Satoshi']">
-              Content for Challenge Vault section coming soon...
-            </div>
+          <div className="w-full px-4">
+            <ChallengeVaultContent podId={podId} />
           </div>
         );
 
